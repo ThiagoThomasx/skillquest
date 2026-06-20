@@ -22,9 +22,17 @@ import { useMissionsStore } from "@/stores/missions-store";
 import { useBadgesStore } from "@/stores/badges-store";
 import { useStreakStore } from "@/stores/streak-store";
 import { useActivityStore } from "@/stores/activity-store";
+import { useQuestlinesStore } from "@/stores/questlines-store";
 import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { getCareerStage } from "@/engines/career-engine";
 import { formatXP, formatRelativeTime } from "@/utils/format";
+import {
+  calculateQuestlineProgress,
+  calculateQuestlineEarnedXP,
+  calculateQuestlineTotalXP,
+  countQuestlineMissions,
+  getNextModule,
+} from "@/utils/questline-engine";
 
 const themes = [
   { name: "Moderno", themeKey: "modern" as const, colors: ["#081120", "#0F1A2D", "#3B82F6", "#F59E0B"], description: "Navy premium — padrão" },
@@ -41,9 +49,19 @@ export default function DashboardPage() {
   const { currentStreak, bestStreak } = useStreakStore();
   const { events } = useActivityStore();
 
+  const { questlines } = useQuestlinesStore();
   const career = getCareerStage(currentLevel);
   const completedMissions = missions.filter((m) => m.status === "completed");
   const activeMissions = missions.filter((m) => m.status === "active").slice(0, 3);
+
+  // Active questline
+  const activeQuestline = questlines.find((q) => q.status === "active") ?? null;
+  const qlProgress = activeQuestline ? calculateQuestlineProgress(activeQuestline, missions) : 0;
+  const qlEarnedXP = activeQuestline ? calculateQuestlineEarnedXP(activeQuestline, missions) : 0;
+  const qlTotalXP = activeQuestline ? calculateQuestlineTotalXP(activeQuestline, missions) : 0;
+  const qlTotalMissions = activeQuestline ? countQuestlineMissions(activeQuestline) : 0;
+  const nextModule = activeQuestline ? getNextModule(activeQuestline, missions) : null;
+  const activeBoss = questlines.find((q) => q.bossBattle.status === "available") ?? activeQuestline;
   const earnedBadges = earned.filter((b) => b.earned);
   const recentActivity = events.slice(0, 5);
 
@@ -78,9 +96,6 @@ export default function DashboardPage() {
       .slice(0, 6);
   }, [earned]);
 
-  // Active questline
-  const reactPath = missions.filter((m) => m.pathId === "path-react");
-  const reactDone = reactPath.filter((m) => m.status === "completed").length;
 
   return (
     <div className="space-y-5 max-w-[1600px]">
@@ -328,17 +343,17 @@ export default function DashboardPage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Questline Ativa</p>
             </div>
 
-            {reactPath.length > 0 ? (
+            {activeQuestline ? (
               <>
-                <h3 className="text-base font-bold text-text mb-1">React Avançado</h3>
-                <p className="text-xs text-text-muted mb-4">{reactPath.length} quests · Nível Intermediário</p>
-                <div className="rounded-lg bg-surface-overlay border border-border h-20 mb-4 flex items-center justify-center">
-                  <p className="text-xs text-text-dim">Arte da trilha em breve</p>
-                </div>
-                <ProgressBar value={reactDone} max={reactPath.length} variant="sky" size="sm" className="mb-2" />
+                <h3 className="text-base font-bold text-text mb-0.5">{activeQuestline.title}</h3>
+                <p className="text-xs text-text-muted mb-3">
+                  {qlTotalMissions} missões · {activeQuestline.className}
+                  {nextModule && <span className="ml-2 text-blue font-medium">→ {nextModule.title}</span>}
+                </p>
+                <ProgressBar value={qlProgress} variant="sky" size="sm" className="mb-2" />
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] text-text-muted">{reactDone} de {reactPath.length} quests</p>
-                  <Button variant="outline" size="sm">Continuar <ArrowRight size={12} /></Button>
+                  <p className="text-[11px] text-text-muted">{qlEarnedXP}/{qlTotalXP} XP · {qlProgress}%</p>
+                  <Button variant="outline" size="sm">Ver Trilha <ArrowRight size={12} /></Button>
                 </div>
               </>
             ) : (
@@ -406,31 +421,49 @@ export default function DashboardPage() {
           <CareerClassCard />
         </div>
 
-        <Card className="p-5 relative overflow-hidden border-rose/20">
+        <Card className={`p-5 relative overflow-hidden ${activeBoss?.bossBattle.status === "available" ? "border-amber/30" : "border-rose/20"}`}>
           <div className="absolute inset-0 bg-gradient-to-br from-rose/5 via-transparent to-transparent pointer-events-none" />
           <div className="relative">
             <div className="flex items-center gap-2 mb-4">
-              <Swords size={14} className="text-rose" />
+              <Swords size={14} className={activeBoss?.bossBattle.status === "available" ? "text-amber" : "text-rose"} />
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Boss Battle</p>
             </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-rose/10 border border-rose/25 flex items-center justify-center shrink-0">
-                <Skull size={24} className="text-rose" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-text">Arquimago das APIs</p>
-                <p className="text-xs text-text-muted mt-0.5">Boss Lendário · Nível 18</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Zap size={10} className="text-amber" />
-                  <span className="text-[11px] font-bold text-amber">+1.000 XP</span>
+            {activeBoss ? (
+              <>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center shrink-0 ${
+                    activeBoss.bossBattle.status === "available" ? "bg-amber/10 border-amber/25" :
+                    activeBoss.bossBattle.status === "completed" ? "bg-emerald/10 border-emerald/25" :
+                    "bg-rose/10 border-rose/25"
+                  }`}>
+                    <Skull size={24} className={
+                      activeBoss.bossBattle.status === "available" ? "text-amber" :
+                      activeBoss.bossBattle.status === "completed" ? "text-emerald" : "text-rose"
+                    } />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-text">{activeBoss.bossBattle.title}</p>
+                    <p className="text-xs text-text-muted mt-0.5">{activeBoss.title}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Zap size={10} className="text-amber" />
+                      <span className="text-[11px] font-bold text-amber">+{activeBoss.bossBattle.xpReward} XP</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <p className="text-xs text-text-muted mb-4">
-              Derrote este boss para desbloquear a classe <span className="text-rose font-semibold">Lenda</span>.
-            </p>
-            <ProgressBar value={currentLevel} max={18} variant="rose" size="sm" className="mb-2" />
-            <p className="text-[11px] text-text-muted">Nível {currentLevel} de 18{currentLevel >= 18 ? " — Disponível!" : " — Bloqueado"}</p>
+                {activeBoss.bossBattle.status === "available" ? (
+                  <p className="text-xs text-amber font-semibold">Disponível! Acesse Questlines para batalhar.</p>
+                ) : activeBoss.bossBattle.status === "completed" ? (
+                  <p className="text-xs text-emerald font-semibold">Boss derrotado! Questline concluída.</p>
+                ) : (
+                  <>
+                    <ProgressBar value={calculateQuestlineProgress(activeBoss, missions)} variant="rose" size="sm" className="mb-2" />
+                    <p className="text-[11px] text-text-muted">Complete todos os módulos para desafiar o boss.</p>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-text-dim">Nenhum boss disponível no momento.</p>
+            )}
           </div>
         </Card>
       </div>

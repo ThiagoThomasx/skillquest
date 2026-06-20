@@ -4,12 +4,14 @@ import { useBadgesStore } from "./badges-store";
 import { useStreakStore } from "./streak-store";
 import { useActivityStore } from "./activity-store";
 import { useUIStore } from "./useUIStore";
+import { useQuestlinesStore } from "./questlines-store";
 
 interface SkillQuestBackup {
   version: string;
   exportedAt: string;
   progress: ReturnType<typeof useProgressStore.getState>;
   missions: ReturnType<typeof useMissionsStore.getState>;
+  questlines: ReturnType<typeof useQuestlinesStore.getState>;
   badges: ReturnType<typeof useBadgesStore.getState>;
   streak: ReturnType<typeof useStreakStore.getState>;
   activity: ReturnType<typeof useActivityStore.getState>;
@@ -18,10 +20,11 @@ interface SkillQuestBackup {
 
 export function exportBackup(): void {
   const backup: SkillQuestBackup = {
-    version: "1.0",
+    version: "2.0",
     exportedAt: new Date().toISOString(),
     progress: useProgressStore.getState(),
     missions: useMissionsStore.getState(),
+    questlines: useQuestlinesStore.getState(),
     badges: useBadgesStore.getState(),
     streak: useStreakStore.getState(),
     activity: useActivityStore.getState(),
@@ -62,6 +65,12 @@ export function importBackup(file: File): Promise<void> {
         });
 
         useMissionsStore.setState({ missions: backup.missions.missions });
+
+        // Migrate: restore questlines if v2.0+, else keep current
+        if (backup.questlines?.questlines) {
+          useQuestlinesStore.setState({ questlines: backup.questlines.questlines });
+        }
+
         useBadgesStore.setState({ earned: backup.badges.earned });
         useStreakStore.setState({
           currentStreak: backup.streak.currentStreak,
@@ -86,6 +95,7 @@ export function importBackup(file: File): Promise<void> {
 export function resetJourney(): void {
   useProgressStore.getState().clearAll();
   useMissionsStore.getState().clearAll();
+  useQuestlinesStore.getState().clearAll();
   useBadgesStore.getState().clearAll();
   useStreakStore.getState().clearAll();
   useActivityStore.getState().clearAll();

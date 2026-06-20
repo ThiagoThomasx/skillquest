@@ -216,6 +216,8 @@ interface MissionsState {
   startMission: (id: string) => void;
   completeMission: (id: string) => void;
   resetMission: (id: string) => void;
+  addMission: (mission: StoredMission) => void;
+  deleteMission: (id: string) => void;
   clearAll: () => void;
 }
 
@@ -323,6 +325,14 @@ export const useMissionsStore = create<MissionsState>()(
               m.id === id ? { ...m, status: "available" as MissionStatus, progress: 0, completedAt: null } : m
             ),
           }));
+        },
+
+        addMission: (mission) => {
+          set((state) => ({ missions: [...state.missions, mission] }));
+        },
+
+        deleteMission: (id) => {
+          set((state) => ({ missions: state.missions.filter((m) => m.id !== id) }));
         },
 
         clearAll: () => set({ missions: INITIAL_MISSIONS }),

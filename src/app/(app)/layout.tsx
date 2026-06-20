@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { LevelUpModal } from "@/components/LevelUpModal";
+import { StoreSync } from "@/components/StoreSync";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       <BottomNav />
       <LevelUpModal />
+      <StoreSync />
     </div>
   );
 }
