@@ -2,7 +2,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { Map, Lock, CheckCircle, Zap } from "lucide-react";
+import { BookOpen, Lock, CheckCircle, Zap } from "lucide-react";
 
 const paths = [
   {
@@ -39,31 +39,31 @@ const paths = [
 
 export default function PathsPage() {
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-5 max-w-4xl">
       <div>
-        <h2 className="text-2xl font-bold text-text">Trilhas de Aprendizado</h2>
-        <p className="text-text-muted mt-1">Escolha seu caminho e siga em frente na jornada.</p>
+        <h2 className="text-xl font-semibold text-text">Trilhas de Aprendizado</h2>
+        <p className="text-sm text-text-muted mt-0.5">Escolha seu caminho e evolua sua carreira.</p>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {paths.map((path) => (
           <Card key={path.id} hoverable={path.status !== "locked"} className="overflow-hidden">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center border ${
                     path.status === "completed"
-                      ? "bg-emerald/10 border-emerald/20"
+                      ? "bg-emerald/10 border-emerald-border"
                       : path.status === "locked"
                       ? "bg-surface-overlay border-border"
-                      : "bg-violet/10 border-violet-border"
+                      : "bg-blue/10 border-blue-border"
                   }`}>
                     {path.status === "completed" ? (
-                      <CheckCircle size={18} className="text-emerald" />
+                      <CheckCircle size={16} className="text-emerald" />
                     ) : path.status === "locked" ? (
-                      <Lock size={18} className="text-text-dim" />
+                      <Lock size={16} className="text-text-dim" />
                     ) : (
-                      <Map size={18} className="text-violet" />
+                      <BookOpen size={16} className="text-blue" />
                     )}
                   </div>
                   <div>
@@ -73,7 +73,7 @@ export default function PathsPage() {
                 </div>
                 <Badge
                   variant={
-                    path.status === "completed" ? "emerald" : path.status === "locked" ? "default" : "violet"
+                    path.status === "completed" ? "emerald" : path.status === "locked" ? "default" : "blue"
                   }
                 >
                   {path.status === "completed" ? "Completa" : path.status === "locked" ? "Bloqueada" : "Ativa"}
@@ -91,7 +91,7 @@ export default function PathsPage() {
               {path.status !== "locked" && (
                 <ProgressBar
                   value={path.progress}
-                  variant={path.status === "completed" ? "emerald" : "violet"}
+                  variant={path.status === "completed" ? "emerald" : "blue"}
                   showLabel
                 />
               )}
@@ -100,8 +100,8 @@ export default function PathsPage() {
                 <div className="flex items-center gap-4 text-sm text-text-muted">
                   <span>{path.missions} missões</span>
                   <div className="flex items-center gap-1">
-                    <Zap size={12} className="text-gold" />
-                    <span className="text-gold font-medium">{path.xp.toLocaleString()} XP</span>
+                    <Zap size={12} className="text-amber" />
+                    <span className="text-amber font-medium">{path.xp.toLocaleString()} XP</span>
                   </div>
                 </div>
                 <Button

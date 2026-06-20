@@ -4,39 +4,39 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Map,
-  Sword,
-  Shield,
+  BookOpen,
+  Target,
+  Award,
   User,
   Settings,
-  Zap,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/paths", label: "Trilhas", icon: Map },
-  { href: "/missions", label: "Missões", icon: Sword },
-  { href: "/badges", label: "Insígnias", icon: Shield },
+  { href: "/paths", label: "Trilhas", icon: BookOpen },
+  { href: "/missions", label: "Missões", icon: Target },
+  { href: "/badges", label: "Conquistas", icon: Award },
   { href: "/profile", label: "Perfil", icon: User },
-  { href: "/settings", label: "Config.", icon: Settings },
+  { href: "/settings", label: "Configurações", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 shrink-0 border-r border-border bg-surface min-h-screen">
+    <aside className="hidden lg:flex flex-col w-56 shrink-0 border-r border-border bg-surface min-h-screen">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 h-14 border-b border-border">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-violet/20 border border-violet-border">
-          <Zap size={14} className="text-violet" />
+      <div className="flex items-center gap-2.5 px-4 h-12 border-b border-border">
+        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue text-white">
+          <TrendingUp size={13} />
         </div>
-        <span className="font-semibold text-text tracking-tight">SkillQuest</span>
+        <span className="font-semibold text-text tracking-tight text-sm">SkillQuest</span>
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-col gap-0.5 px-3 py-4 flex-1">
+      <nav className="flex flex-col gap-0.5 px-2 py-3 flex-1">
         {navItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
@@ -44,28 +44,28 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                 active
-                  ? "bg-violet/10 text-violet border border-violet-border"
+                  ? "bg-blue/10 text-blue"
                   : "text-text-muted hover:text-text hover:bg-surface-raised"
               )}
             >
-              <Icon size={16} />
+              <Icon size={15} strokeWidth={active ? 2.5 : 2} />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      {/* User stub */}
-      <div className="px-3 py-4 border-t border-border">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-raised cursor-pointer transition-colors">
-          <div className="w-7 h-7 rounded-full bg-violet/20 border border-violet-border flex items-center justify-center text-xs font-bold text-violet">
-            A
+      {/* User footer */}
+      <div className="px-2 py-3 border-t border-border">
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-raised cursor-pointer transition-colors">
+          <div className="w-6 h-6 rounded-full bg-blue flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+            T
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-text truncate">Aventureiro</p>
-            <p className="text-xs text-text-muted">Nível 7</p>
+            <p className="text-xs font-medium text-text truncate">Thiago Thomas</p>
+            <p className="text-[11px] text-text-muted">Nível 7 · 2.450 XP</p>
           </div>
         </div>
       </div>

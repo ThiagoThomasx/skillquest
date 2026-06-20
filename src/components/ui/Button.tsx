@@ -7,17 +7,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-violet text-white hover:bg-violet-hover",
+        primary: "bg-blue text-white hover:bg-blue-hover",
         secondary: "bg-surface-raised text-text border border-border hover:bg-surface-overlay",
         outline: "border border-border bg-transparent text-text hover:bg-surface-raised",
         ghost: "text-text-muted hover:text-text hover:bg-surface-raised",
-        gold: "bg-gold/10 text-gold border border-gold-border hover:bg-gold/20",
-        danger: "bg-rose/10 text-rose border border-rose-muted hover:bg-rose/20",
+        amber: "bg-amber/10 text-amber border border-amber-border hover:bg-amber/20",
+        danger: "bg-rose/10 text-rose border border-rose-border hover:bg-rose/20",
       },
       size: {
         sm: "h-8 px-3 text-xs",
         md: "h-9 px-4",
-        lg: "h-11 px-6 text-base",
+        lg: "h-10 px-5 text-base",
         icon: "h-9 w-9",
       },
     },

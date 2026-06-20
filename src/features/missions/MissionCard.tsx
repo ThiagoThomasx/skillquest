@@ -1,4 +1,4 @@
-import { Sword, Clock, Zap } from "lucide-react";
+import { Target, Clock, Zap } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -7,15 +7,15 @@ import { DIFFICULTY_LABEL } from "@/constants";
 import { formatDuration } from "@/utils/format";
 import type { Mission } from "@/types";
 
-const difficultyVariant: Record<string, "violet" | "gold" | "rose"> = {
-  easy: "violet",
-  medium: "gold",
+const difficultyVariant: Record<string, "blue" | "amber" | "rose"> = {
+  easy: "blue",
+  medium: "amber",
   hard: "rose",
 };
 
-const statusIcon: Record<string, string> = {
+const statusIconColor: Record<string, string> = {
   completed: "text-emerald",
-  active: "text-violet",
+  active: "text-blue",
   available: "text-text-dim",
   locked: "text-text-dim",
 };
@@ -38,12 +38,12 @@ export function MissionCard({ mission, onStart, onContinue }: MissionCardProps) 
   return (
     <Card hoverable={status !== "completed"} className="p-4">
       <div className="flex items-center gap-4">
-        <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center border ${
-          status === "completed" ? "bg-emerald/10 border-emerald/20" :
-          status === "active" ? "bg-violet/10 border-violet-border" :
+        <div className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center border ${
+          status === "completed" ? "bg-emerald/10 border-emerald-border" :
+          status === "active" ? "bg-blue/10 border-blue-border" :
           "bg-surface-overlay border-border"
         }`}>
-          <Sword size={16} className={statusIcon[status]} />
+          <Target size={15} className={statusIconColor[status]} />
         </div>
 
         <div className="flex-1 min-w-0 space-y-1.5">
@@ -51,7 +51,7 @@ export function MissionCard({ mission, onStart, onContinue }: MissionCardProps) 
             <p className="text-sm font-medium text-text">{title}</p>
             <Badge variant={difficultyVariant[difficulty]}>{DIFFICULTY_LABEL[difficulty]}</Badge>
             {status === "completed" && <Badge variant="emerald">Completa</Badge>}
-            {status === "active" && <Badge variant="violet">Em andamento</Badge>}
+            {status === "active" && <Badge variant="blue">Em andamento</Badge>}
           </div>
           <div className="flex items-center gap-3 text-xs text-text-muted">
             <span>{pathTitle}</span>
@@ -60,12 +60,12 @@ export function MissionCard({ mission, onStart, onContinue }: MissionCardProps) 
               <span>{formatDuration(estimatedMinutes)}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Zap size={10} className="text-gold" />
-              <span className="text-gold">{xpReward} XP</span>
+              <Zap size={10} className="text-amber" />
+              <span className="text-amber font-medium">{xpReward} XP</span>
             </div>
           </div>
           {status === "active" && (
-            <ProgressBar value={progress} variant="violet" size="sm" showLabel />
+            <ProgressBar value={progress} variant="blue" size="sm" showLabel />
           )}
         </div>
 

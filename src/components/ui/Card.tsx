@@ -8,8 +8,9 @@ const cardVariants = cva(
       variant: {
         default: "bg-surface border-border",
         raised: "bg-surface-raised border-border",
-        violet: "bg-violet/5 border-violet-border",
-        gold: "bg-gold/5 border-gold-border",
+        blue: "bg-blue/5 border-blue-border",
+        amber: "bg-amber/5 border-amber-border",
+        emerald: "bg-emerald/5 border-emerald-border",
         ghost: "bg-transparent border-border hover:bg-surface",
       },
       hoverable: {

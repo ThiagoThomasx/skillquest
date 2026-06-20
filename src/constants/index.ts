@@ -35,8 +35,8 @@ export const BADGE_RARITY_LABEL: Record<string, string> = {
 
 export const BADGE_RARITY_COLOR: Record<string, string> = {
   common: "text-text-muted",
-  rare: "text-violet",
-  epic: "text-gold",
+  rare: "text-sky",
+  epic: "text-amber",
   legendary: "text-rose",
 };
 

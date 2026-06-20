@@ -26,7 +26,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-void text-text">
+      <body className="min-h-full bg-canvas text-text">
         <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
       </body>
     </html>

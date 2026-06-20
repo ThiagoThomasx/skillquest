@@ -3,33 +3,36 @@ import { cn } from "@/lib/utils";
 type ProgressBarProps = {
   value: number;
   max?: number;
-  variant?: "violet" | "gold" | "emerald";
-  size?: "sm" | "md";
+  variant?: "blue" | "amber" | "emerald" | "sky";
+  size?: "xs" | "sm" | "md";
   showLabel?: boolean;
   className?: string;
 };
 
 const trackColors = {
-  violet: "bg-violet/10",
-  gold: "bg-gold/10",
+  blue: "bg-blue/10",
+  amber: "bg-amber/10",
   emerald: "bg-emerald/10",
+  sky: "bg-sky/10",
 };
 
 const fillColors = {
-  violet: "bg-violet",
-  gold: "bg-gold",
+  blue: "bg-blue",
+  amber: "bg-amber",
   emerald: "bg-emerald",
+  sky: "bg-sky",
 };
 
 const heights = {
+  xs: "h-0.5",
   sm: "h-1",
-  md: "h-2",
+  md: "h-1.5",
 };
 
 export function ProgressBar({
   value,
   max = 100,
-  variant = "violet",
+  variant = "blue",
   size = "md",
   showLabel = false,
   className,

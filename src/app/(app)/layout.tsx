@@ -4,13 +4,13 @@ import { BottomNav } from "@/components/layout/BottomNav";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden bg-void">
+    <div className="flex h-screen overflow-hidden bg-canvas">
       <Sidebar />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar />
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-5 pb-20 lg:pb-5">
           {children}
         </main>
       </div>
