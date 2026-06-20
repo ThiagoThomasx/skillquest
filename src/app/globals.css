@@ -1,26 +1,112 @@
 @import "tailwindcss";
 
+@theme {
+  /* Fonts */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Background layers */
+  --color-void: #0d0d14;
+  --color-surface: #13131f;
+  --color-surface-raised: #18182a;
+  --color-surface-overlay: #1e1e30;
+
+  /* Borders */
+  --color-border: #1e1e30;
+  --color-border-subtle: #16162a;
+  --color-border-strong: #2a2a40;
+
+  /* Text */
+  --color-text: #e8e8f0;
+  --color-text-muted: #6b6b8a;
+  --color-text-dim: #3d3d5c;
+
+  /* Accent — violet (primary actions, magic) */
+  --color-violet: #7c6af7;
+  --color-violet-hover: #8f7ffa;
+  --color-violet-muted: #7c6af71a;
+  --color-violet-border: #7c6af733;
+
+  /* Accent — gold (rewards, achievements, XP) */
+  --color-gold: #f0a839;
+  --color-gold-hover: #f5bc5c;
+  --color-gold-muted: #f0a8391a;
+  --color-gold-border: #f0a83933;
+
+  /* Accent — emerald (success, completed) */
+  --color-emerald: #34d399;
+  --color-emerald-muted: #34d3991a;
+
+  /* Accent — rose (danger, failed) */
+  --color-rose: #f87171;
+  --color-rose-muted: #f871711a;
+}
+
+/* ── shadcn/ui CSS variable bridge ──────────────────────────────────────
+   shadcn components reference these names. We map them to the RPG palette
+   so shadcn primitives (Dialog, Input, Select…) inherit our dark theme.
+   ──────────────────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  --background: #0d0d14;
+  --foreground: #e8e8f0;
+
+  --card: #13131f;
+  --card-foreground: #e8e8f0;
+
+  --popover: #13131f;
+  --popover-foreground: #e8e8f0;
+
+  --primary: #7c6af7;
+  --primary-foreground: #ffffff;
+
+  --secondary: #18182a;
+  --secondary-foreground: #e8e8f0;
+
+  --muted: #18182a;
+  --muted-foreground: #6b6b8a;
+
+  --accent: #1e1e30;
+  --accent-foreground: #e8e8f0;
+
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+
+  --border: #1e1e30;
+  --input: #1e1e30;
+  --ring: #7c6af7;
+
+  --radius: 0.5rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--color-border);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-void);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dim);
+}
+
+::selection {
+  background: var(--color-violet-muted);
+  color: var(--color-text);
 }
