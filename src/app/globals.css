@@ -5,81 +5,81 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  /* Background layers — deep navy, not void-black */
-  --color-canvas: #0b0f1a;
-  --color-surface: #111827;
-  --color-surface-raised: #1a2234;
-  --color-surface-overlay: #1f2a40;
+  /* Background layers — deep navy premium */
+  --color-canvas: #081120;
+  --color-surface: #0F1A2D;
+  --color-surface-raised: #14233D;
+  --color-surface-overlay: #1B2E4A;
 
   /* Borders */
-  --color-border: #1e2d45;
-  --color-border-subtle: #14213a;
-  --color-border-strong: #2d4060;
+  --color-border: #22385A;
+  --color-border-subtle: #162848;
+  --color-border-strong: #2D4A6E;
 
   /* Text */
-  --color-text: #f1f5f9;
-  --color-text-muted: #64748b;
-  --color-text-dim: #334155;
+  --color-text: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --color-text-dim: #4A5C78;
 
-  /* Primary — blue (deep professional blue) */
-  --color-blue: #2563eb;
-  --color-blue-hover: #1d4ed8;
-  --color-blue-muted: #2563eb1a;
-  --color-blue-border: #2563eb33;
+  /* Primary — blue */
+  --color-blue: #3B82F6;
+  --color-blue-hover: #2563EB;
+  --color-blue-muted: #3B82F61A;
+  --color-blue-border: #3B82F633;
 
   /* Accent — amber (XP, rewards) */
-  --color-amber: #d97706;
-  --color-amber-hover: #b45309;
-  --color-amber-muted: #d977061a;
-  --color-amber-border: #d9770633;
+  --color-amber: #F59E0B;
+  --color-amber-hover: #D97706;
+  --color-amber-muted: #F59E0B1A;
+  --color-amber-border: #F59E0B33;
 
   /* Accent — emerald (success, completed) */
-  --color-emerald: #059669;
-  --color-emerald-muted: #0596691a;
-  --color-emerald-border: #05966933;
+  --color-emerald: #22C55E;
+  --color-emerald-muted: #22C55E1A;
+  --color-emerald-border: #22C55E33;
 
   /* Accent — rose (danger) */
-  --color-rose: #e11d48;
-  --color-rose-muted: #e11d481a;
-  --color-rose-border: #e11d4833;
+  --color-rose: #EF4444;
+  --color-rose-muted: #EF44441A;
+  --color-rose-border: #EF444433;
 
   /* Highlight — sky (secondary accent) */
-  --color-sky: #0ea5e9;
-  --color-sky-muted: #0ea5e91a;
-  --color-sky-border: #0ea5e933;
+  --color-sky: #38BDF8;
+  --color-sky-muted: #38BDF81A;
+  --color-sky-border: #38BDF833;
 }
 
 /* ── shadcn/ui CSS variable bridge ─────────────────────── */
 :root {
   color-scheme: dark;
 
-  --background: #0b0f1a;
-  --foreground: #f1f5f9;
+  --background: #081120;
+  --foreground: #F8FAFC;
 
-  --card: #111827;
-  --card-foreground: #f1f5f9;
+  --card: #0F1A2D;
+  --card-foreground: #F8FAFC;
 
-  --popover: #111827;
-  --popover-foreground: #f1f5f9;
+  --popover: #0F1A2D;
+  --popover-foreground: #F8FAFC;
 
-  --primary: #2563eb;
+  --primary: #3B82F6;
   --primary-foreground: #ffffff;
 
-  --secondary: #1a2234;
-  --secondary-foreground: #f1f5f9;
+  --secondary: #14233D;
+  --secondary-foreground: #F8FAFC;
 
-  --muted: #1a2234;
-  --muted-foreground: #64748b;
+  --muted: #14233D;
+  --muted-foreground: #94A3B8;
 
-  --accent: #1f2a40;
-  --accent-foreground: #f1f5f9;
+  --accent: #1B2E4A;
+  --accent-foreground: #F8FAFC;
 
-  --destructive: #e11d48;
+  --destructive: #EF4444;
   --destructive-foreground: #ffffff;
 
-  --border: #1e2d45;
-  --input: #1e2d45;
-  --ring: #2563eb;
+  --border: #22385A;
+  --input: #22385A;
+  --ring: #3B82F6;
 
   --radius: 0.5rem;
 }
