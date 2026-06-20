@@ -115,74 +115,470 @@ body {
   color: var(--color-text);
 }
 
-/* ── Pixel Quest theme ──────────────────────────────────── */
+
+/* ══════════════════════════════════════════════════════════
+   PIXEL QUEST — 16-bit RPG Moderno
+   ══════════════════════════════════════════════════════════ */
+
 [data-theme="pixel-quest"] {
-  --color-canvas: #0d0d1a;
-  --color-surface: #150d2e;
-  --color-surface-raised: #1f1040;
-  --color-surface-overlay: #261350;
+  /* ── Color palette: neon purple + cyber green ── */
+  --color-canvas: #0a0a12;
+  --color-surface: #0f0d20;
+  --color-surface-raised: #181330;
+  --color-surface-overlay: #221840;
 
-  --color-border: #3b2472;
-  --color-border-subtle: #251760;
-  --color-border-strong: #4d2f96;
+  --color-border: #2e1f5e;
+  --color-border-subtle: #1c1240;
+  --color-border-strong: #4a2f8a;
 
-  --color-text: #f0e8ff;
-  --color-text-muted: #a78bca;
-  --color-text-dim: #5b4080;
+  --color-text: #e8d8ff;
+  --color-text-muted: #9070c0;
+  --color-text-dim: #4a3070;
 
-  --color-blue: #7c3aed;
-  --color-blue-hover: #6d28d9;
-  --color-blue-muted: #7c3aed1a;
-  --color-blue-border: #7c3aed33;
+  /* Primary: electric violet */
+  --color-blue: #8b5cf6;
+  --color-blue-hover: #7c3aed;
+  --color-blue-muted: #8b5cf61a;
+  --color-blue-border: #8b5cf640;
 
-  --color-amber: #22C55E;
-  --color-amber-hover: #16a34a;
-  --color-amber-muted: #22C55E1A;
-  --color-amber-border: #22C55E33;
+  /* XP/rewards: cyber green */
+  --color-amber: #00ff88;
+  --color-amber-hover: #00cc6a;
+  --color-amber-muted: #00ff881a;
+  --color-amber-border: #00ff8840;
 
-  --color-sky: #a855f7;
-  --color-sky-muted: #a855f71a;
-  --color-sky-border: #a855f733;
+  /* Success: bright lime */
+  --color-emerald: #39ff14;
+  --color-emerald-muted: #39ff141a;
+  --color-emerald-border: #39ff1440;
 
-  --background: #0d0d1a;
-  --card: #150d2e;
-  --primary: #7c3aed;
+  /* Danger: hot pink */
+  --color-rose: #ff0080;
+  --color-rose-muted: #ff00801a;
+  --color-rose-border: #ff008040;
+
+  /* Secondary: cyan */
+  --color-sky: #00e5ff;
+  --color-sky-muted: #00e5ff1a;
+  --color-sky-border: #00e5ff40;
+
+  /* shadcn bridge */
+  --background: #0a0a12;
+  --card: #0f0d20;
+  --primary: #8b5cf6;
+  --ring: #8b5cf6;
+
+  /* Pixel font — monospace for that 8-bit feel */
+  --font-sans: 'Courier New', 'Courier', ui-monospace, monospace;
 }
 
-/* ── Fantasy RPG theme ──────────────────────────────────── */
+/* ── Square everything — no rounded corners ── */
+[data-theme="pixel-quest"] *,
+[data-theme="pixel-quest"] *::before,
+[data-theme="pixel-quest"] *::after {
+  border-radius: 0 !important;
+}
+
+/* ── Pixel grid background ── */
+[data-theme="pixel-quest"] body {
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* ── CRT Scanline overlay ── */
+[data-theme="pixel-quest"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.12) 3px,
+    rgba(0, 0, 0, 0.12) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── 8-bit offset box shadows on cards and surfaces ── */
+[data-theme="pixel-quest"] aside,
+[data-theme="pixel-quest"] header {
+  border-right-color: #4a2f8a;
+  border-bottom-color: #4a2f8a;
+}
+
+/* Cards get pixel offset shadow */
+[data-theme="pixel-quest"] .border {
+  box-shadow: 2px 2px 0 rgba(139, 92, 246, 0.35);
+}
+
+/* ── Glowing borders on primary elements ── */
+[data-theme="pixel-quest"] .border-blue-border,
+[data-theme="pixel-quest"] .border-blue\/10,
+[data-theme="pixel-quest"] .border-blue\/15,
+[data-theme="pixel-quest"] .border-blue\/30 {
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5), 2px 2px 0 rgba(139, 92, 246, 0.3);
+}
+
+/* ── Neon glow on XP / amber elements ── */
+[data-theme="pixel-quest"] .text-amber,
+[data-theme="pixel-quest"] .border-amber-border {
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.7);
+}
+[data-theme="pixel-quest"] .bg-amber {
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+/* ── Neon glow on primary/blue text ── */
+[data-theme="pixel-quest"] .text-blue {
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.8);
+}
+
+/* ── Buttons: pixel press effect ── */
+[data-theme="pixel-quest"] button:not(:disabled) {
+  box-shadow: 3px 3px 0 rgba(139, 92, 246, 0.5);
+  transition: box-shadow 80ms, transform 80ms;
+}
+[data-theme="pixel-quest"] button:not(:disabled):active {
+  box-shadow: none !important;
+  transform: translate(3px, 3px);
+}
+
+/* ── Progress bars: block/chunky style ── */
+[data-theme="pixel-quest"] .h-0\.5,
+[data-theme="pixel-quest"] .h-1,
+[data-theme="pixel-quest"] .h-1\.5 {
+  height: 6px !important;
+}
+[data-theme="pixel-quest"] .bg-amber {
+  image-rendering: pixelated;
+  animation: pixel-pulse 2s steps(4, end) infinite;
+}
+[data-theme="pixel-quest"] .bg-blue {
+  animation: pixel-pulse-blue 2s steps(4, end) infinite;
+}
+
+@keyframes pixel-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+@keyframes pixel-pulse-blue {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+/* ── Navigation active state: pixel highlight ── */
+[data-theme="pixel-quest"] nav a {
+  border-width: 1px;
+  letter-spacing: 0.05em;
+}
+
+/* ── Avatar: pixel art border ── */
+[data-theme="pixel-quest"] .rounded-full {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+/* ── Badge: pixel style with bright border ── */
+[data-theme="pixel-quest"] .text-xs.font-medium {
+  letter-spacing: 0.08em;
+}
+
+/* ── Logo icon: neon glow ── */
+[data-theme="pixel-quest"] .bg-blue\/10 {
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4), inset 0 0 8px rgba(139, 92, 246, 0.1);
+}
+
+/* ── Sidebar "Sua Jornada" card: pixel decoration ── */
+[data-theme="pixel-quest"] .rounded-xl.bg-surface-raised {
+  border-left: 3px solid #8b5cf6;
+}
+
+/* ── Input fields: neon focus ── */
+[data-theme="pixel-quest"] input:focus,
+[data-theme="pixel-quest"] textarea:focus,
+[data-theme="pixel-quest"] select:focus {
+  outline: 2px solid #8b5cf6 !important;
+  outline-offset: -2px !important;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.4) !important;
+}
+
+/* ── Custom scrollbar ── */
+[data-theme="pixel-quest"] ::-webkit-scrollbar-thumb {
+  background: #4a2f8a;
+  border-radius: 0;
+}
+[data-theme="pixel-quest"] ::-webkit-scrollbar-thumb:hover {
+  background: #8b5cf6;
+}
+
+/* ── Selection: neon highlight ── */
+[data-theme="pixel-quest"] ::selection {
+  background: #8b5cf6;
+  color: #0a0a12;
+}
+
+/* ── Blinking cursor on logo text ── */
+[data-theme="pixel-quest"] aside .font-bold::after {
+  content: '▮';
+  animation: blink 1s steps(1, end) infinite;
+  color: #8b5cf6;
+  margin-left: 2px;
+  font-size: 0.6em;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   FANTASY RPG — MMORPG / Fantasia Épica
+   ══════════════════════════════════════════════════════════ */
+
 [data-theme="fantasy-rpg"] {
-  --color-canvas: #120808;
-  --color-surface: #1c0f0f;
-  --color-surface-raised: #2a1515;
-  --color-surface-overlay: #361a1a;
+  /* ── Color palette: dark crimson + ancient gold ── */
+  --color-canvas: #0e0805;
+  --color-surface: #160c07;
+  --color-surface-raised: #1f110a;
+  --color-surface-overlay: #2a160d;
 
-  --color-border: #5c2020;
-  --color-border-subtle: #3d1515;
-  --color-border-strong: #7a2c2c;
+  --color-border: #4a1e10;
+  --color-border-subtle: #2e1208;
+  --color-border-strong: #6b2b15;
 
-  --color-text: #fff5e6;
-  --color-text-muted: #c49a6c;
-  --color-text-dim: #6b3d2e;
+  --color-text: #f5e6c8;
+  --color-text-muted: #b8956a;
+  --color-text-dim: #6b4a28;
 
-  --color-blue: #c2410c;
-  --color-blue-hover: #9a3412;
-  --color-blue-muted: #c2410c1a;
-  --color-blue-border: #c2410c33;
+  /* Primary: molten gold */
+  --color-blue: #d4a017;
+  --color-blue-hover: #b8880f;
+  --color-blue-muted: #d4a0171a;
+  --color-blue-border: #d4a01740;
 
-  --color-amber: #ca8a04;
-  --color-amber-hover: #a16207;
-  --color-amber-muted: #ca8a041a;
-  --color-amber-border: #ca8a0433;
+  /* XP/rewards: gleaming gold */
+  --color-amber: #f0c040;
+  --color-amber-hover: #d4a830;
+  --color-amber-muted: #f0c0401a;
+  --color-amber-border: #f0c04040;
 
-  --color-emerald: #b45309;
-  --color-emerald-muted: #b453091a;
-  --color-emerald-border: #b4530933;
+  /* Success: forest green */
+  --color-emerald: #4a9c5a;
+  --color-emerald-muted: #4a9c5a1a;
+  --color-emerald-border: #4a9c5a40;
 
-  --color-sky: #dc2626;
-  --color-sky-muted: #dc26261a;
-  --color-sky-border: #dc262633;
+  /* Danger: blood red */
+  --color-rose: #cc2222;
+  --color-rose-muted: #cc22221a;
+  --color-rose-border: #cc222240;
 
-  --background: #120808;
-  --card: #1c0f0f;
-  --primary: #c2410c;
+  /* Secondary: arcane violet */
+  --color-sky: #9966cc;
+  --color-sky-muted: #9966cc1a;
+  --color-sky-border: #9966cc40;
+
+  /* shadcn bridge */
+  --background: #0e0805;
+  --card: #160c07;
+  --primary: #d4a017;
+  --ring: #d4a017;
+
+  /* Serif font for that fantasy tome feel */
+  --font-sans: Georgia, 'Palatino Linotype', Palatino, serif;
+}
+
+/* ── Parchment texture background ── */
+[data-theme="fantasy-rpg"] body {
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(100, 30, 10, 0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 80%, rgba(80, 20, 5, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(60, 15, 5, 0.08) 0%, transparent 70%);
+}
+
+/* ── Ornate gold border on cards ── */
+[data-theme="fantasy-rpg"] .border {
+  border-color: #4a1e10;
+  box-shadow:
+    0 0 0 1px rgba(212, 160, 23, 0.08),
+    0 4px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(212, 160, 23, 0.1);
+}
+
+/* Primary accent elements: gold glow */
+[data-theme="fantasy-rpg"] .border-blue-border,
+[data-theme="fantasy-rpg"] .border-blue\/10,
+[data-theme="fantasy-rpg"] .border-blue\/15,
+[data-theme="fantasy-rpg"] .border-blue\/30 {
+  border-color: rgba(212, 160, 23, 0.5) !important;
+  box-shadow:
+    0 0 12px rgba(212, 160, 23, 0.2),
+    0 0 40px rgba(212, 160, 23, 0.05),
+    inset 0 1px 0 rgba(212, 160, 23, 0.15);
+}
+
+/* ── Cards: corner ornaments using pseudo-elements ── */
+[data-theme="fantasy-rpg"] .rounded-xl.border {
+  position: relative;
+}
+[data-theme="fantasy-rpg"] .rounded-xl.border::before,
+[data-theme="fantasy-rpg"] .rounded-xl.border::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: rgba(212, 160, 23, 0.5);
+  border-style: solid;
+  z-index: 1;
+  pointer-events: none;
+}
+[data-theme="fantasy-rpg"] .rounded-xl.border::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+[data-theme="fantasy-rpg"] .rounded-xl.border::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+/* ── Ember glow on XP elements ── */
+[data-theme="fantasy-rpg"] .text-amber {
+  text-shadow: 0 0 10px rgba(240, 192, 64, 0.6), 0 0 20px rgba(240, 192, 64, 0.3);
+}
+[data-theme="fantasy-rpg"] .bg-amber {
+  box-shadow: 0 0 12px rgba(240, 192, 64, 0.5), 0 0 30px rgba(240, 192, 64, 0.2);
+}
+
+/* ── Gold text glow on primary color ── */
+[data-theme="fantasy-rpg"] .text-blue {
+  text-shadow: 0 0 10px rgba(212, 160, 23, 0.5), 0 0 20px rgba(212, 160, 23, 0.2);
+}
+
+/* ── Avatar: ornate gold ring ── */
+[data-theme="fantasy-rpg"] .rounded-full {
+  outline: 2px solid rgba(212, 160, 23, 0.6);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 8px rgba(212, 160, 23, 0.3),
+    0 0 20px rgba(212, 160, 23, 0.1);
+}
+
+/* ── Navigation: scroll-like active item ── */
+[data-theme="fantasy-rpg"] nav a {
+  letter-spacing: 0.03em;
+}
+
+/* ── Buttons: embossed stone/leather look ── */
+[data-theme="fantasy-rpg"] button:not(:disabled) {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(212, 160, 23, 0.15) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset;
+  transition: all 150ms;
+}
+[data-theme="fantasy-rpg"] button:not(:disabled):hover {
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.6),
+    0 0 12px rgba(212, 160, 23, 0.2),
+    0 1px 0 rgba(212, 160, 23, 0.2) inset;
+}
+[data-theme="fantasy-rpg"] button:not(:disabled):active {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    0 0 6px rgba(212, 160, 23, 0.15);
+  transform: translateY(1px);
+}
+
+/* ── Progress bars: thick mana/health bar ── */
+[data-theme="fantasy-rpg"] .h-0\.5,
+[data-theme="fantasy-rpg"] .h-1,
+[data-theme="fantasy-rpg"] .h-1\.5 {
+  height: 8px !important;
+  border: 1px solid rgba(212, 160, 23, 0.2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+[data-theme="fantasy-rpg"] .h-0\.5 > div,
+[data-theme="fantasy-rpg"] .h-1 > div,
+[data-theme="fantasy-rpg"] .h-1\.5 > div {
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* ── Section labels: decorative dividers ── */
+[data-theme="fantasy-rpg"] .uppercase.tracking-widest {
+  letter-spacing: 0.2em;
+  position: relative;
+}
+[data-theme="fantasy-rpg"] .uppercase.tracking-widest::before {
+  content: '⸻ ';
+  opacity: 0.4;
+}
+[data-theme="fantasy-rpg"] .uppercase.tracking-widest::after {
+  content: ' ⸻';
+  opacity: 0.4;
+}
+
+/* ── Sidebar: ancient tome border ── */
+[data-theme="fantasy-rpg"] aside {
+  border-right: 1px solid #4a1e10;
+  box-shadow:
+    4px 0 24px rgba(0, 0, 0, 0.6),
+    1px 0 0 rgba(212, 160, 23, 0.06);
+}
+
+/* ── Logo area: radiant glow ── */
+[data-theme="fantasy-rpg"] .bg-blue\/10 {
+  box-shadow:
+    0 0 15px rgba(212, 160, 23, 0.2),
+    inset 0 1px 0 rgba(212, 160, 23, 0.15);
+}
+
+/* ── Input: parchment-like focus ── */
+[data-theme="fantasy-rpg"] input:focus,
+[data-theme="fantasy-rpg"] textarea:focus,
+[data-theme="fantasy-rpg"] select:focus {
+  outline: none !important;
+  border-color: rgba(212, 160, 23, 0.5) !important;
+  box-shadow: 0 0 12px rgba(212, 160, 23, 0.2), inset 0 0 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── Scrollbar: ancient wood / dark iron ── */
+[data-theme="fantasy-rpg"] ::-webkit-scrollbar-thumb {
+  background: #4a1e10;
+  border: 1px solid rgba(212, 160, 23, 0.2);
+}
+[data-theme="fantasy-rpg"] ::-webkit-scrollbar-thumb:hover {
+  background: #6b2b15;
+}
+
+/* ── Selection: ember highlight ── */
+[data-theme="fantasy-rpg"] ::selection {
+  background: rgba(212, 160, 23, 0.25);
+  color: #f5e6c8;
+}
+
+/* ── Top border accent on headers ── */
+[data-theme="fantasy-rpg"] header {
+  border-bottom-color: #4a1e10;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(212, 160, 23, 0.06);
+}
+
+/* ── Badge: gem-like styling ── */
+[data-theme="fantasy-rpg"] .border.border-amber-border,
+[data-theme="fantasy-rpg"] .border-amber-border {
+  border-color: rgba(240, 192, 64, 0.4) !important;
+  box-shadow: 0 0 6px rgba(240, 192, 64, 0.2), inset 0 1px 0 rgba(240, 192, 64, 0.1);
+}
+
+/* ── Streak / rose elements: blood magic glow ── */
+[data-theme="fantasy-rpg"] .text-rose {
+  text-shadow: 0 0 8px rgba(204, 34, 34, 0.6);
+}
+[data-theme="fantasy-rpg"] .border-rose-border {
+  box-shadow: 0 0 8px rgba(204, 34, 34, 0.2);
 }
