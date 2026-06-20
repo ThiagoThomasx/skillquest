@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
+import { devtools, persist } from "zustand/middleware";
 
 export type AppTheme = "modern" | "pixel-quest" | "fantasy-rpg";
 
@@ -19,27 +19,33 @@ interface UIState {
 
 export const useUIStore = create<UIState>()(
   devtools(
-    (set) => ({
-      sidebarCollapsed: false,
-      commandPaletteOpen: false,
-      xpAnimation: { active: false, amount: 0 },
-      theme: "modern" as AppTheme,
+    persist(
+      (set) => ({
+        sidebarCollapsed: false,
+        commandPaletteOpen: false,
+        xpAnimation: { active: false, amount: 0 },
+        theme: "modern" as AppTheme,
 
-      toggleSidebar: () =>
-        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+        toggleSidebar: () =>
+          set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
-      setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
+        setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
 
-      openCommandPalette: () => set({ commandPaletteOpen: true }),
-      closeCommandPalette: () => set({ commandPaletteOpen: false }),
+        openCommandPalette: () => set({ commandPaletteOpen: true }),
+        closeCommandPalette: () => set({ commandPaletteOpen: false }),
 
-      triggerXPAnimation: (amount) => {
-        set({ xpAnimation: { active: true, amount } });
-        setTimeout(() => set({ xpAnimation: { active: false, amount: 0 } }), 2_000);
-      },
+        triggerXPAnimation: (amount) => {
+          set({ xpAnimation: { active: true, amount } });
+          setTimeout(() => set({ xpAnimation: { active: false, amount: 0 } }), 2_000);
+        },
 
-      setTheme: (theme) => set({ theme }),
-    }),
+        setTheme: (theme) => set({ theme }),
+      }),
+      {
+        name: "skillquest-ui",
+        partialize: (state) => ({ theme: state.theme, sidebarCollapsed: state.sidebarCollapsed }),
+      }
+    ),
     { name: "ui-store" }
   )
 );
