@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 type ProgressBarProps = {
   value: number;
   max?: number;
-  variant?: "blue" | "amber" | "emerald" | "sky";
+  variant?: "blue" | "amber" | "emerald" | "sky" | "rose";
   size?: "xs" | "sm" | "md";
   showLabel?: boolean;
   className?: string;
@@ -14,6 +14,7 @@ const trackColors = {
   amber: "bg-amber/10",
   emerald: "bg-emerald/10",
   sky: "bg-sky/10",
+  rose: "bg-rose/10",
 };
 
 const fillColors = {
@@ -21,6 +22,7 @@ const fillColors = {
   amber: "bg-amber",
   emerald: "bg-emerald",
   sky: "bg-sky",
+  rose: "bg-rose",
 };
 
 const heights = {

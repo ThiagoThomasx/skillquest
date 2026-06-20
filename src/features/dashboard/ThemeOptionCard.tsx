@@ -1,15 +1,23 @@
+"use client";
+
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUIStore, type AppTheme } from "@/stores/useUIStore";
 
 interface ThemeOptionCardProps {
   name: string;
+  themeKey: AppTheme;
   colors: string[];
-  active?: boolean;
+  description: string;
 }
 
-export function ThemeOptionCard({ name, colors, active = false }: ThemeOptionCardProps) {
+export function ThemeOptionCard({ name, themeKey, colors, description }: ThemeOptionCardProps) {
+  const { theme, setTheme } = useUIStore();
+  const active = theme === themeKey;
+
   return (
     <div
+      onClick={() => setTheme(themeKey)}
       className={cn(
         "relative rounded-xl border p-4 cursor-pointer transition-all",
         active
@@ -25,12 +33,7 @@ export function ThemeOptionCard({ name, colors, active = false }: ThemeOptionCar
       </div>
 
       <div className="flex items-center justify-between">
-        <p
-          className={cn(
-            "text-sm font-semibold",
-            active ? "text-blue" : "text-text"
-          )}
-        >
+        <p className={cn("text-sm font-semibold", active ? "text-blue" : "text-text")}>
           {name}
         </p>
         {active && (
@@ -40,9 +43,9 @@ export function ThemeOptionCard({ name, colors, active = false }: ThemeOptionCar
         )}
       </div>
 
-      {active && (
-        <p className="text-[10px] text-text-muted mt-0.5">Tema ativo</p>
-      )}
+      <p className={cn("text-[10px] mt-0.5", active ? "text-blue/70" : "text-text-muted")}>
+        {description}
+      </p>
     </div>
   );
 }

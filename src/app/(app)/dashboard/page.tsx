@@ -24,6 +24,10 @@ import {
   MapPin,
   Sparkles,
   BarChart3,
+  Skull,
+  Sword,
+  Wand2,
+  Swords,
 } from "lucide-react";
 
 // ── Mock data ────────────────────────────────────────────────────────────────
@@ -71,6 +75,8 @@ const currentMissions = [
     progress: 65,
     timeLeft: "~20 min",
     difficulty: "Médio",
+    mainQuest: true,
+    questline: "React Avançado",
   },
   {
     title: "Next.js App Router",
@@ -79,6 +85,7 @@ const currentMissions = [
     progress: 30,
     timeLeft: "~35 min",
     difficulty: "Difícil",
+    questline: "React Avançado",
   },
   {
     title: "Desafio Diário: CSS Grid",
@@ -129,18 +136,21 @@ const recentBadges = [
 const themes = [
   {
     name: "Moderno",
+    themeKey: "modern" as const,
     colors: ["#081120", "#0F1A2D", "#3B82F6", "#F59E0B"],
-    active: true,
+    description: "Navy premium — padrão",
   },
   {
     name: "Pixel Quest",
+    themeKey: "pixel-quest" as const,
     colors: ["#0d0d1a", "#1a0d2e", "#7c3aed", "#22C55E"],
-    active: false,
+    description: "Cyberpunk roxo-neón",
   },
   {
     name: "Fantasy RPG",
+    themeKey: "fantasy-rpg" as const,
     colors: ["#120808", "#2d1212", "#c2410c", "#ca8a04"],
-    active: false,
+    description: "Fogo e ouro épico",
   },
 ];
 
@@ -163,9 +173,12 @@ export default function DashboardPage() {
 
               {/* Left: Level + XP */}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-2">
-                  Bem-vindo de volta, Aventureiro
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wand2 size={12} className="text-sky" />
+                  <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">
+                    Frontend Mage · Bem-vindo de volta
+                  </p>
+                </div>
 
                 <div className="flex items-center gap-3 mb-1">
                   <h1 className="text-4xl font-black text-text tracking-tight">Nível 7</h1>
@@ -272,24 +285,28 @@ export default function DashboardPage() {
         {/* Missions — 3/5 */}
         <div className="xl:col-span-3 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-text">Missões em Andamento</h2>
+            <h2 className="text-sm font-bold text-text">Quests em Andamento</h2>
             <Button variant="ghost" size="sm">
               Ver todas <ChevronRight size={13} />
             </Button>
           </div>
 
           {currentMissions.map((m) => (
-            <Card key={m.title} hoverable className="p-4">
+            <Card key={m.title} hoverable className={`p-4 ${m.mainQuest ? "border-amber/20 bg-amber/[0.02]" : ""}`}>
               <div className="flex items-start gap-3 mb-3">
                 <div
                   className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                     m.daily
                       ? "bg-amber/10 border border-amber-border"
-                      : "bg-blue/10 border border-blue-border"
+                      : m.mainQuest
+                        ? "bg-sky/10 border border-sky/30"
+                        : "bg-blue/10 border border-blue-border"
                   }`}
                 >
                   {m.daily ? (
                     <Flame size={14} className="text-amber" />
+                  ) : m.mainQuest ? (
+                    <Sword size={14} className="text-sky" />
                   ) : (
                     <Target size={14} className="text-blue" />
                   )}
@@ -298,6 +315,11 @@ export default function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-text truncate">{m.title}</p>
+                    {m.mainQuest && (
+                      <span className="text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 rounded-full px-2 py-0.5 shrink-0">
+                        Quest Principal
+                      </span>
+                    )}
                     {m.daily && (
                       <span className="text-[10px] font-bold bg-amber/10 text-amber border border-amber/20 rounded-full px-2 py-0.5 shrink-0">
                         Bônus 2×
@@ -305,6 +327,12 @@ export default function DashboardPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {"questline" in m && m.questline && (
+                      <>
+                        <span className="text-[10px] text-text-dim">📜 {m.questline}</span>
+                        <span className="text-text-dim">·</span>
+                      </>
+                    )}
                     <span className="text-xs text-text-muted">{m.category}</span>
                     <span className="text-text-dim">·</span>
                     <div className="flex items-center gap-1 text-text-muted">
@@ -329,7 +357,7 @@ export default function DashboardPage() {
               </div>
 
               {m.progress > 0 && (
-                <ProgressBar value={m.progress} variant={m.daily ? "amber" : "blue"} size="sm" showLabel />
+                <ProgressBar value={m.progress} variant={m.daily ? "amber" : m.mainQuest ? "sky" : "blue"} size="sm" showLabel />
               )}
             </Card>
           ))}
@@ -369,7 +397,7 @@ export default function DashboardPage() {
       {/* ── Trilha Recomendada + Conquistas Recentes + Estatísticas ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* Trilha Recomendada */}
+        {/* Questline Ativa */}
         <Card className="p-5 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-sky/5 via-transparent to-transparent pointer-events-none" />
           <div className="relative">
@@ -378,12 +406,12 @@ export default function DashboardPage() {
                 <BookOpen size={14} className="text-sky" />
               </div>
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">
-                Trilha Recomendada
+                Questline Ativa
               </p>
             </div>
 
-            <h3 className="text-base font-bold text-text mb-1">React Full-Stack</h3>
-            <p className="text-xs text-text-muted mb-4">8 missões · Nível Intermediário</p>
+            <h3 className="text-base font-bold text-text mb-1">React Avançado</h3>
+            <p className="text-xs text-text-muted mb-4">8 quests · Nível Intermediário</p>
 
             {/* Path progress placeholder */}
             <div className="rounded-lg bg-surface-overlay border border-border h-20 mb-4 flex items-center justify-center">
@@ -392,7 +420,7 @@ export default function DashboardPage() {
 
             <ProgressBar value={37} max={100} variant="sky" size="sm" className="mb-2" />
             <div className="flex items-center justify-between">
-              <p className="text-[11px] text-text-muted">3 de 8 missões</p>
+              <p className="text-[11px] text-text-muted">3 de 8 quests</p>
               <Button variant="outline" size="sm">
                 Continuar <ArrowRight size={12} />
               </Button>
@@ -467,57 +495,55 @@ export default function DashboardPage() {
           <CareerClassCard />
         </div>
 
-        {/* Destaque de conquista */}
-        <Card className="p-5 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber/5 via-transparent to-transparent pointer-events-none" />
+        {/* Boss Battle */}
+        <Card className="p-5 relative overflow-hidden border-rose/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose/5 via-transparent to-transparent pointer-events-none" />
           <div className="relative">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles size={14} className="text-amber" />
+              <Swords size={14} className="text-rose" />
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">
-                Em Destaque
+                Boss Battle
               </p>
             </div>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber/10 border border-amber/25 flex items-center justify-center shrink-0">
-                <Trophy size={24} className="text-amber" />
+              <div className="w-14 h-14 rounded-2xl bg-rose/10 border border-rose/25 flex items-center justify-center shrink-0">
+                <Skull size={24} className="text-rose" />
               </div>
               <div>
-                <p className="text-sm font-bold text-text">Lenda Viva</p>
-                <p className="text-xs text-text-muted mt-0.5">Raridade: Lendária</p>
+                <p className="text-sm font-bold text-text">Arquimago das APIs</p>
+                <p className="text-xs text-text-muted mt-0.5">Boss Lendário · Nível 18</p>
                 <div className="flex items-center gap-1 mt-1">
                   <Zap size={10} className="text-amber" />
-                  <span className="text-[11px] font-bold text-amber">+500 XP</span>
+                  <span className="text-[11px] font-bold text-amber">+1.000 XP</span>
                 </div>
               </div>
             </div>
 
             <p className="text-xs text-text-muted mb-4">
-              Alcance o nível 18 para desbloquear esta conquista lendária.
+              Derrote este boss para desbloquear a classe <span className="text-rose font-semibold">Lenda</span> e conquistas épicas.
             </p>
 
-            <ProgressBar value={7} max={18} variant="amber" size="sm" className="mb-2" />
-            <p className="text-[11px] text-text-muted">Nível 7 de 18</p>
+            <ProgressBar value={7} max={18} variant="rose" size="sm" className="mb-2" />
+            <p className="text-[11px] text-text-muted">Nível 7 de 18 — Bloqueado</p>
           </div>
         </Card>
       </div>
 
-      {/* ── Personalização Visual ──────────────────────────────── */}
+      {/* ── Tema Visual ───────────────────────────────────────── */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={14} className="text-text-muted" />
-          <h2 className="text-sm font-bold text-text">Personalize sua experiência</h2>
-          <span className="text-[10px] text-text-dim bg-surface-raised border border-border rounded-full px-2 py-0.5 ml-1">
-            Em breve
-          </span>
+          <h2 className="text-sm font-bold text-text">Tema do Aventureiro</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {themes.map((t) => (
             <ThemeOptionCard
               key={t.name}
               name={t.name}
+              themeKey={t.themeKey}
               colors={t.colors}
-              active={t.active}
+              description={t.description}
             />
           ))}
         </div>

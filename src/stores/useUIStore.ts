@@ -1,16 +1,20 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
+export type AppTheme = "modern" | "pixel-quest" | "fantasy-rpg";
+
 interface UIState {
   sidebarCollapsed: boolean;
   commandPaletteOpen: boolean;
   xpAnimation: { active: boolean; amount: number };
+  theme: AppTheme;
 
   toggleSidebar: () => void;
   setSidebarCollapsed: (value: boolean) => void;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
   triggerXPAnimation: (amount: number) => void;
+  setTheme: (theme: AppTheme) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -19,6 +23,7 @@ export const useUIStore = create<UIState>()(
       sidebarCollapsed: false,
       commandPaletteOpen: false,
       xpAnimation: { active: false, amount: 0 },
+      theme: "modern" as AppTheme,
 
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
@@ -32,6 +37,8 @@ export const useUIStore = create<UIState>()(
         set({ xpAnimation: { active: true, amount } });
         setTimeout(() => set({ xpAnimation: { active: false, amount: 0 } }), 2_000);
       },
+
+      setTheme: (theme) => set({ theme }),
     }),
     { name: "ui-store" }
   )

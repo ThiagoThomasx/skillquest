@@ -114,3 +114,75 @@ body {
   background: var(--color-blue-muted);
   color: var(--color-text);
 }
+
+/* ── Pixel Quest theme ──────────────────────────────────── */
+[data-theme="pixel-quest"] {
+  --color-canvas: #0d0d1a;
+  --color-surface: #150d2e;
+  --color-surface-raised: #1f1040;
+  --color-surface-overlay: #261350;
+
+  --color-border: #3b2472;
+  --color-border-subtle: #251760;
+  --color-border-strong: #4d2f96;
+
+  --color-text: #f0e8ff;
+  --color-text-muted: #a78bca;
+  --color-text-dim: #5b4080;
+
+  --color-blue: #7c3aed;
+  --color-blue-hover: #6d28d9;
+  --color-blue-muted: #7c3aed1a;
+  --color-blue-border: #7c3aed33;
+
+  --color-amber: #22C55E;
+  --color-amber-hover: #16a34a;
+  --color-amber-muted: #22C55E1A;
+  --color-amber-border: #22C55E33;
+
+  --color-sky: #a855f7;
+  --color-sky-muted: #a855f71a;
+  --color-sky-border: #a855f733;
+
+  --background: #0d0d1a;
+  --card: #150d2e;
+  --primary: #7c3aed;
+}
+
+/* ── Fantasy RPG theme ──────────────────────────────────── */
+[data-theme="fantasy-rpg"] {
+  --color-canvas: #120808;
+  --color-surface: #1c0f0f;
+  --color-surface-raised: #2a1515;
+  --color-surface-overlay: #361a1a;
+
+  --color-border: #5c2020;
+  --color-border-subtle: #3d1515;
+  --color-border-strong: #7a2c2c;
+
+  --color-text: #fff5e6;
+  --color-text-muted: #c49a6c;
+  --color-text-dim: #6b3d2e;
+
+  --color-blue: #c2410c;
+  --color-blue-hover: #9a3412;
+  --color-blue-muted: #c2410c1a;
+  --color-blue-border: #c2410c33;
+
+  --color-amber: #ca8a04;
+  --color-amber-hover: #a16207;
+  --color-amber-muted: #ca8a041a;
+  --color-amber-border: #ca8a0433;
+
+  --color-emerald: #b45309;
+  --color-emerald-muted: #b453091a;
+  --color-emerald-border: #b4530933;
+
+  --color-sky: #dc2626;
+  --color-sky-muted: #dc26261a;
+  --color-sky-border: #dc262633;
+
+  --background: #120808;
+  --card: #1c0f0f;
+  --primary: #c2410c;
+}
