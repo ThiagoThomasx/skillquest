@@ -6,14 +6,28 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
   User, Bell, Palette, Shield, Download, Upload,
-  AlertTriangle, ChevronRight, RefreshCw,
+  AlertTriangle, ChevronRight, RefreshCw, Check, X, Pencil,
 } from "lucide-react";
 import { exportBackup, importBackup, resetJourney } from "@/stores/backup-store";
+import { useProgressStore } from "@/stores/progress-store";
+import { useUIStore } from "@/stores/useUIStore";
+import Link from "next/link";
+
+const THEME_LABELS: Record<string, string> = {
+  modern: "Moderno (padrão)",
+  "pixel-quest": "Pixel Quest",
+  "fantasy-rpg": "Fantasy RPG",
+};
 
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importStatus, setImportStatus] = useState<"idle" | "success" | "error">("idle");
   const [resetStep, setResetStep] = useState<0 | 1 | 2>(0);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+
+  const { username, setUsername } = useProgressStore();
+  const { theme } = useUIStore();
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -36,68 +50,66 @@ export default function SettingsPage() {
     setResetStep(0);
   }
 
+  function startEditName() {
+    setNameInput(username);
+    setEditingName(true);
+  }
+
+  function saveName() {
+    const trimmed = nameInput.trim();
+    if (trimmed) setUsername(trimmed);
+    setEditingName(false);
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h2 className="text-2xl font-bold text-text">Configurações</h2>
-        <p className="text-text-muted mt-1">Gerencie suas preferências e conta.</p>
+        <p className="text-text-muted mt-1">Gerencie suas preferências e dados locais.</p>
       </div>
 
-      {/* Conta */}
+      {/* Perfil */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <User size={16} className="text-text-muted" />
-            <h3 className="font-semibold text-text">Conta</h3>
+            <h3 className="font-semibold text-text">Perfil</h3>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="divide-y divide-border">
-            {[
-              { label: "Nome de usuário", value: "Aventureiro" },
-              { label: "E-mail", value: "aventureiro@skillquest.com" },
-              { label: "Senha", value: "••••••••" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                <div>
-                  <p className="text-sm font-medium text-text">{item.label}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{item.value}</p>
+          <div className="flex items-center justify-between py-3">
+            <div className="flex-1 min-w-0 mr-4">
+              <p className="text-sm font-medium text-text">Nome de usuário</p>
+              {editingName ? (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <input
+                    autoFocus
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveName(); if (e.key === "Escape") setEditingName(false); }}
+                    className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-blue bg-surface-raised text-sm text-text focus:outline-none focus:ring-1 focus:ring-blue"
+                    maxLength={32}
+                  />
+                  <button onClick={saveName} className="w-7 h-7 rounded-lg bg-blue/10 text-blue hover:bg-blue/20 flex items-center justify-center transition-colors">
+                    <Check size={13} />
+                  </button>
+                  <button onClick={() => setEditingName(false)} className="w-7 h-7 rounded-lg hover:bg-surface-overlay text-text-dim flex items-center justify-center transition-colors">
+                    <X size={13} />
+                  </button>
                 </div>
-                <Button variant="ghost" size="sm" className="gap-1">
-                  Editar <ChevronRight size={14} />
-                </Button>
-              </div>
-            ))}
+              ) : (
+                <p className="text-xs text-text-muted mt-0.5">{username}</p>
+              )}
+            </div>
+            {!editingName && (
+              <Button variant="ghost" size="sm" className="gap-1 shrink-0" onClick={startEditName}>
+                <Pencil size={12} /> Editar
+              </Button>
+            )}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Notificações */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell size={16} className="text-text-muted" />
-            <h3 className="font-semibold text-text">Notificações</h3>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="divide-y divide-border">
-            {[
-              { label: "Lembrete diário", value: "Ativado — 20:00" },
-              { label: "Conquistas", value: "Ativado" },
-              { label: "Novidades", value: "Desativado" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                <div>
-                  <p className="text-sm font-medium text-text">{item.label}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{item.value}</p>
-                </div>
-                <Button variant="ghost" size="sm" className="gap-1">
-                  Editar <ChevronRight size={14} />
-                </Button>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs text-text-dim pt-2 border-t border-border">
+            SkillQuest é 100% local — sem conta, sem e-mail, sem senha. Seus dados ficam no seu dispositivo.
+          </p>
         </CardContent>
       </Card>
 
@@ -109,23 +121,41 @@ export default function SettingsPage() {
             <h3 className="font-semibold text-text">Aparência</h3>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="divide-y divide-border">
-            {[
-              { label: "Tema visual", value: "Ver opções no Dashboard" },
-              { label: "Idioma", value: "Português (BR)" },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                <div>
-                  <p className="text-sm font-medium text-text">{item.label}</p>
-                  <p className="text-xs text-text-muted mt-0.5">{item.value}</p>
-                </div>
-                <Button variant="ghost" size="sm" className="gap-1">
-                  Mudar <ChevronRight size={14} />
-                </Button>
-              </div>
-            ))}
+        <CardContent className="pt-0 space-y-0 divide-y divide-border">
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-sm font-medium text-text">Tema visual</p>
+              <p className="text-xs text-text-muted mt-0.5">{THEME_LABELS[theme] ?? theme}</p>
+            </div>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-1">
+                Mudar <ChevronRight size={14} />
+              </Button>
+            </Link>
           </div>
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="text-sm font-medium text-text">Idioma</p>
+              <p className="text-xs text-text-muted mt-0.5">Português (BR)</p>
+            </div>
+            <Badge variant="default">Único</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notificações */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Bell size={16} className="text-text-muted" />
+            <h3 className="font-semibold text-text">Notificações</h3>
+            <Badge variant="default">Em breve</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <p className="text-sm text-text-muted">
+            Lembretes de estudo e alertas de conquista serão configuráveis em uma versão futura.
+          </p>
         </CardContent>
       </Card>
 

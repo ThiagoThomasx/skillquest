@@ -11,6 +11,7 @@ import {
   ThemeOptionCard,
   BadgeCard,
 } from "@/features/dashboard";
+import Link from "next/link";
 import {
   Zap, Target, Award, Flame, TrendingUp, ArrowRight,
   CheckCircle2, Clock, ChevronRight, Star, Trophy,
@@ -187,7 +188,7 @@ export default function DashboardPage() {
 
                 <div className="flex items-center gap-3 mb-1">
                   <h1 className="text-4xl font-black text-text tracking-tight">Nível {currentLevel}</h1>
-                  <Badge variant="blue">Frontend Developer</Badge>
+                  <Badge variant="blue">{career.title}</Badge>
                 </div>
 
                 <p className="text-sm text-text-muted mb-5">
@@ -268,9 +269,11 @@ export default function DashboardPage() {
           )}
 
           <div className="mt-auto pt-4 border-t border-border">
-            <Button variant="amber" size="sm" className="w-full">
-              Ver conquistas <ArrowRight size={13} />
-            </Button>
+            <Link href="/badges" className="block">
+              <Button variant="amber" size="sm" className="w-full">
+                Ver conquistas <ArrowRight size={13} />
+              </Button>
+            </Link>
           </div>
         </Card>
       </div>
@@ -455,7 +458,9 @@ export default function DashboardPage() {
         <div className="xl:col-span-3 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-text">Quests em Andamento</h2>
-            <Button variant="ghost" size="sm">Ver todas <ChevronRight size={13} /></Button>
+            <Link href="/missions">
+              <Button variant="ghost" size="sm">Ver todas <ChevronRight size={13} /></Button>
+            </Link>
           </div>
 
           {activeMissions.length === 0 ? (
@@ -711,9 +716,11 @@ export default function DashboardPage() {
               <p className="text-sm font-bold text-text">Nenhuma questline ativa</p>
               <p className="text-xs text-text-muted mt-0.5">Explore o marketplace e instale uma trilha de aprendizado para começar.</p>
             </div>
-            <Button variant="primary" size="sm">
-              Explorar <ArrowRight size={13} />
-            </Button>
+            <Link href="/explore">
+              <Button variant="primary" size="sm">
+                Explorar <ArrowRight size={13} />
+              </Button>
+            </Link>
           </div>
         </Card>
       )}
@@ -724,7 +731,9 @@ export default function DashboardPage() {
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Conquistas Recentes</p>
-            <Button variant="ghost" size="sm">Ver todas <ChevronRight size={13} /></Button>
+            <Link href="/badges">
+              <Button variant="ghost" size="sm">Ver todas <ChevronRight size={13} /></Button>
+            </Link>
           </div>
           {recentBadges.length === 0 ? (
             <div className="text-center py-6">

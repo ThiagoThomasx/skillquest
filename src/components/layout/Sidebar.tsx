@@ -17,6 +17,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useProgressStore } from "@/stores/progress-store";
+import { useStreakStore } from "@/stores/streak-store";
+import { useBadgesStore } from "@/stores/badges-store";
+import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
+import { useMemo } from "react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +35,23 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { username, currentLevel, xpInCurrentLevel, xpRequiredForCurrentLevel } = useProgressStore();
+  const { currentStreak, bestStreak } = useStreakStore();
+  const { earned } = useBadgesStore();
+
+  const initials = username
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const xpToNextLevel = xpRequiredForCurrentLevel - xpInCurrentLevel;
+
+  const nextBadge = useMemo(() => {
+    const earnedIds = earned.filter((b) => b.earned).map((b) => b.id);
+    return BADGE_DEFINITIONS.find((b) => !earnedIds.includes(b.id)) ?? null;
+  }, [earned]);
 
   return (
     <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border bg-surface min-h-screen overflow-y-auto">
@@ -78,14 +100,12 @@ export function Sidebar() {
 
           <div className="flex items-center gap-2.5 mb-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue to-blue/40 flex items-center justify-center text-sm font-bold text-white shrink-0">
-              TT
+              {initials}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-text truncate">Thiago Thomas</p>
+              <p className="text-sm font-semibold text-text truncate">{username}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[11px] text-blue font-semibold">Nível 7</span>
-                <span className="text-text-dim text-[10px]">·</span>
-                <span className="text-[10px] text-text-muted">Frontend Dev</span>
+                <span className="text-[11px] text-blue font-semibold">Nível {currentLevel}</span>
               </div>
             </div>
           </div>
@@ -94,12 +114,12 @@ export function Sidebar() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <Zap size={10} className="text-amber" />
-                <span className="text-[11px] font-semibold text-amber">2.450 XP</span>
+                <span className="text-[11px] font-semibold text-amber">{xpInCurrentLevel.toLocaleString()} XP</span>
               </div>
-              <span className="text-[10px] text-text-muted">/ 3.000</span>
+              <span className="text-[10px] text-text-muted">/ {xpRequiredForCurrentLevel.toLocaleString()}</span>
             </div>
-            <ProgressBar value={2450} max={3000} variant="amber" size="sm" />
-            <p className="text-[10px] text-text-muted">550 XP para o Nível 8</p>
+            <ProgressBar value={xpInCurrentLevel} max={xpRequiredForCurrentLevel} variant="amber" size="sm" />
+            <p className="text-[10px] text-text-muted">{xpToNextLevel.toLocaleString()} XP para o Nível {currentLevel + 1}</p>
           </div>
         </div>
 
@@ -110,31 +130,33 @@ export function Sidebar() {
           </div>
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-bold text-text">7</span>
-              <span className="text-[11px] text-text-muted">dias seguidos</span>
+              <span className="text-base font-bold text-text">{currentStreak}</span>
+              <span className="text-[11px] text-text-muted">dia{currentStreak !== 1 ? "s" : ""} seguido{currentStreak !== 1 ? "s" : ""}</span>
             </div>
-            <p className="text-[10px] text-text-muted">Recorde: 14 dias</p>
+            <p className="text-[10px] text-text-muted">Recorde: {bestStreak} dia{bestStreak !== 1 ? "s" : ""}</p>
           </div>
         </div>
 
         {/* Próxima Recompensa */}
-        <div className="rounded-xl bg-surface-raised border border-border p-3">
-          <div className="flex items-center gap-1.5 mb-2">
-            <Star size={11} className="text-amber" />
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-              Próxima Recompensa
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber/10 border border-amber-border flex items-center justify-center shrink-0">
-              <Award size={13} className="text-amber" />
+        {nextBadge && (
+          <div className="rounded-xl bg-surface-raised border border-border p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Star size={11} className="text-amber" />
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+                Próxima Conquista
+              </p>
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-text truncate">TypeScript Expert</p>
-              <p className="text-[10px] text-text-muted">550 XP restantes</p>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber/10 border border-amber-border flex items-center justify-center shrink-0">
+                <Award size={13} className="text-amber" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-text truncate">{nextBadge.title}</p>
+                <p className="text-[10px] text-text-muted truncate">{nextBadge.howToUnlock}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Desafio Diário */}
         <div className="rounded-xl bg-blue/5 border border-blue/15 p-3">
@@ -159,10 +181,10 @@ export function Sidebar() {
           className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-surface-raised cursor-pointer transition-colors text-text-muted hover:text-text"
         >
           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue to-blue/40 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-            TT
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-text truncate">Thiago Thomas</p>
+            <p className="text-xs font-medium text-text truncate">{username}</p>
             <p className="text-[10px] text-text-muted">Ver configurações</p>
           </div>
           <Settings size={12} className="shrink-0" />
