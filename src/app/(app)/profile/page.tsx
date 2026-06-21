@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -9,104 +9,161 @@ import {
   Zap, Target, Award, Flame, Calendar, Edit, Shield,
   Star, Trophy, Sword, BookOpen, Crown, ChevronRight,
   TrendingUp, MapPin, Sparkles, Clock, CheckCircle2,
+  Timer, BarChart3,
 } from "lucide-react";
+import { useProgressStore } from "@/stores/progress-store";
+import { useMissionsStore } from "@/stores/missions-store";
+import { useBadgesStore } from "@/stores/badges-store";
+import { useStreakStore } from "@/stores/streak-store";
+import { useActivityStore } from "@/stores/activity-store";
+import { useQuestlinesStore } from "@/stores/questlines-store";
+import { useStudySessionStore } from "@/stores/study-session-store";
+import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
+import { getCareerStage } from "@/engines/career-engine";
+import {
+  calculateQuestlineProgress,
+  calculateQuestlineTotalXP,
+  calculateQuestlineEarnedXP,
+  countQuestlineMissions,
+} from "@/utils/questline-engine";
+import { formatXP, formatRelativeTime } from "@/utils/format";
 
-// ── Data ─────────────────────────────────────────────────────────────────────
+const CAREER_STAGES_DEF = [
+  { title: "Aprendiz", minLevel: 1, maxLevel: 4, icon: BookOpen },
+  { title: "Aventureiro", minLevel: 5, maxLevel: 6, icon: Sword },
+  { title: "Aprendiz Avançado", minLevel: 7, maxLevel: 9, icon: Shield },
+  { title: "Especialista", minLevel: 10, maxLevel: 14, icon: Star },
+  { title: "Mestre", minLevel: 15, maxLevel: 19, icon: Crown },
+  { title: "Lenda", minLevel: 20, maxLevel: 999, icon: Trophy },
+];
 
-const CHARACTER = {
-  name: "Thiago Thomas",
-  initials: "TT",
-  class: "Frontend Mage",
-  classIcon: Sparkles,
-  title: "Aprendiz Avançado",
-  level: 7,
-  xp: 2450,
-  xpToNext: 3000,
-  streak: 7,
-  rank: "#142",
-  joinedAt: "Jun 2026",
-  bio: "Desenvolvedor apaixonado por criar experiências visuais épicas. Em jornada rumo ao nível Lendário.",
+const EVENT_ICON: Record<string, React.ElementType> = {
+  mission_completed: CheckCircle2,
+  mission_started: Target,
+  badge_earned: Award,
+  level_up: TrendingUp,
+  streak_record: Flame,
+  journey_reset: Shield,
+};
+const EVENT_COLOR: Record<string, string> = {
+  mission_completed: "text-emerald",
+  mission_started: "text-blue",
+  badge_earned: "text-amber",
+  level_up: "text-amber",
+  streak_record: "text-rose",
+  journey_reset: "text-text-dim",
 };
 
-const STATS = [
-  { label: "XP Total", value: "2.450", icon: Zap, color: "text-amber", bg: "bg-amber/10", border: "border-amber-border" },
-  { label: "Missões", value: "12", icon: Target, color: "text-blue", bg: "bg-blue/10", border: "border-blue-border" },
-  { label: "Conquistas", value: "3", icon: Award, color: "text-emerald", bg: "bg-emerald/10", border: "border-emerald-border" },
-  { label: "Sequência", value: "7d", icon: Flame, color: "text-rose", bg: "bg-rose/10", border: "border-rose-border" },
-  { label: "Ranking", value: "#142", icon: Trophy, color: "text-amber", bg: "bg-amber/10", border: "border-amber-border" },
-  { label: "Classes", value: "1", icon: Shield, color: "text-sky", bg: "bg-sky/10", border: "border-sky-border" },
-];
-
-const CAREER_STAGES = [
-  { title: "Aprendiz", level: 1, icon: BookOpen, done: true },
-  { title: "Aventureiro", level: 5, icon: Sword, done: true },
-  { title: "Aprendiz Avançado", level: 7, icon: Shield, done: false, current: true },
-  { title: "Especialista", level: 10, icon: Star, done: false },
-  { title: "Mestre", level: 15, icon: Crown, done: false },
-  { title: "Lenda", level: 20, icon: Trophy, done: false },
-];
-
-const TIMELINE = [
-  { type: "mission", action: "Completou missão", title: "Variáveis CSS e Temas", xp: 100, date: "Hoje", icon: CheckCircle2, color: "text-emerald" },
-  { type: "badge", action: "Conquista desbloqueada", title: "Sequência de Fogo", xp: 150, date: "Ontem", icon: Flame, color: "text-rose" },
-  { type: "mission", action: "Completou missão", title: "Fundamentos de TypeScript", xp: 150, date: "19 Jun", icon: CheckCircle2, color: "text-emerald" },
-  { type: "level", action: "Subiu para Nível 7", title: "Frontend Mage desbloqueado", xp: 0, date: "18 Jun", icon: TrendingUp, color: "text-amber" },
-  { type: "badge", action: "Conquista desbloqueada", title: "TypeScript Expert", xp: 300, date: "15 Jun", icon: Award, color: "text-sky" },
-  { type: "mission", action: "Completou missão", title: "React Hooks na Prática", xp: 200, date: "14 Jun", icon: CheckCircle2, color: "text-emerald" },
-];
-
-const ACTIVE_QUESTLINES = [
-  { title: "React Avançado", progress: 45, missions: "11/24", xp: "2.160 / 4.800" },
-];
-
-const RECENT_BADGES = [
-  { title: "Primeiro Passo", icon: Star, color: "text-amber", rarity: "Comum" },
-  { title: "Sequência de Fogo", icon: Flame, color: "text-rose", rarity: "Raro" },
-  { title: "TypeScript Expert", icon: Zap, color: "text-sky", rarity: "Épico" },
-];
-
-// ── Page ─────────────────────────────────────────────────────────────────────
+function formatHours(totalMinutes: number): string {
+  if (totalMinutes < 60) return `${totalMinutes}min`;
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
 export default function ProfilePage() {
-  const [timelineExpanded, setTimelineExpanded] = useState(false);
-  const xpPercent = Math.round((CHARACTER.xp / CHARACTER.xpToNext) * 100);
-  const ClassIcon = CHARACTER.classIcon;
+  const { totalXP, currentLevel, xpInCurrentLevel, xpRequiredForCurrentLevel, username, joinedAt } = useProgressStore();
+  const { missions } = useMissionsStore();
+  const { earned } = useBadgesStore();
+  const { currentStreak, bestStreak } = useStreakStore();
+  const { events } = useActivityStore();
+  const { questlines } = useQuestlinesStore();
+  const { sessions } = useStudySessionStore();
 
-  const timelineItems = timelineExpanded ? TIMELINE : TIMELINE.slice(0, 3);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
+
+  const career = getCareerStage(currentLevel);
+  const completedMissions = missions.filter((m) => m.status === "completed");
+  const earnedBadges = earned.filter((b) => b.earned);
+  const activeQuestlines = questlines.filter((q) => q.status === "active" || q.status === "available");
+
+  // Study session stats
+  const totalMinutes = useMemo(
+    () => sessions.reduce((sum, s) => sum + Math.ceil(s.durationSeconds / 60), 0),
+    [sessions]
+  );
+
+  const bestWeekMinutes = useMemo(() => {
+    if (sessions.length === 0) return 0;
+    const byWeek: Record<string, number> = {};
+    sessions.forEach((s) => {
+      const d = new Date(s.startedAt);
+      const weekStart = new Date(d);
+      weekStart.setDate(d.getDate() - d.getDay());
+      const key = weekStart.toISOString().slice(0, 10);
+      byWeek[key] = (byWeek[key] ?? 0) + Math.ceil(s.durationSeconds / 60);
+    });
+    return Math.max(...Object.values(byWeek));
+  }, [sessions]);
+
+  const dailyAverageMinutes = useMemo(() => {
+    if (sessions.length === 0) return 0;
+    const days = new Set(sessions.map((s) => s.startedAt.slice(0, 10)));
+    return Math.round(totalMinutes / days.size);
+  }, [sessions, totalMinutes]);
+
+  // Recent earned badges with definitions
+  const recentEarnedBadges = useMemo(() => {
+    return BADGE_DEFINITIONS
+      .filter((b) => earned.find((e) => e.id === b.id && e.earned))
+      .slice(0, 6);
+  }, [earned]);
+
+  // Timeline from activity events
+  const recentEvents = events.slice(0, 6);
+  const visibleEvents = timelineExpanded ? recentEvents : recentEvents.slice(0, 3);
+
+  // Career stages with current
+  const careerStages = CAREER_STAGES_DEF.map((s) => ({
+    ...s,
+    done: currentLevel >= s.minLevel,
+    current: currentLevel >= s.minLevel && currentLevel <= s.maxLevel,
+  }));
+  const nextStage = CAREER_STAGES_DEF.find((s) => currentLevel < s.minLevel);
+
+  const xpPercent = Math.round((xpInCurrentLevel / xpRequiredForCurrentLevel) * 100);
+  const joinedDate = joinedAt
+    ? new Date(joinedAt).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })
+    : "—";
+
+  const initials = username
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="space-y-5 max-w-4xl">
+
       {/* ── Character Header ──────────────────────────────────── */}
       <Card className="overflow-hidden">
-        {/* Banner */}
         <div className="h-28 bg-gradient-to-br from-blue/30 via-blue/10 to-sky/5 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-blue/20 via-transparent to-amber/10" />
           <div className="absolute bottom-0 right-0 w-40 h-40 bg-blue/10 rounded-full translate-x-10 translate-y-10" />
-          {/* Class badge on banner */}
           <div className="absolute top-4 right-4">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface/80 backdrop-blur border border-blue/30">
-              <ClassIcon size={13} className="text-blue" />
-              <span className="text-xs font-semibold text-text">{CHARACTER.class}</span>
+              <Sparkles size={13} className="text-blue" />
+              <span className="text-xs font-semibold text-text">{career.title}</span>
             </div>
           </div>
         </div>
 
         <CardContent className="relative pt-0">
-          {/* Avatar row */}
           <div className="flex items-end gap-4 -mt-10 mb-5">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue to-blue-hover flex items-center justify-center text-2xl font-black text-white shadow-xl border-4 border-canvas shrink-0">
-              {CHARACTER.initials}
+              {initials}
             </div>
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-start justify-between flex-wrap gap-2">
                 <div>
-                  <h2 className="text-xl font-black text-text">{CHARACTER.name}</h2>
+                  <h2 className="text-xl font-black text-text">{username}</h2>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Badge variant="blue">Nível {CHARACTER.level}</Badge>
-                    <Badge variant="default">{CHARACTER.title}</Badge>
+                    <Badge variant="blue">Nível {currentLevel}</Badge>
+                    <Badge variant="default">{career.title}</Badge>
                     <span className="flex items-center gap-1 text-xs text-text-muted">
                       <MapPin size={11} />
-                      Desde {CHARACTER.joinedAt}
+                      Desde {joinedDate}
                     </span>
                   </div>
                 </div>
@@ -118,21 +175,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Bio */}
-          <p className="text-sm text-text-muted mb-5 leading-relaxed">{CHARACTER.bio}</p>
-
           {/* XP Progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs">
-              <span className="text-text-muted">Progresso para Nível {CHARACTER.level + 1}</span>
+              <span className="text-text-muted">Progresso para Nível {currentLevel + 1}</span>
               <span className="text-amber font-semibold">
-                {CHARACTER.xp.toLocaleString()} / {CHARACTER.xpToNext.toLocaleString()} XP
+                {xpInCurrentLevel.toLocaleString("pt-BR")} / {xpRequiredForCurrentLevel.toLocaleString("pt-BR")} XP
               </span>
             </div>
-            <ProgressBar value={CHARACTER.xp} max={CHARACTER.xpToNext} variant="amber" size="sm" />
+            <ProgressBar value={xpInCurrentLevel} max={xpRequiredForCurrentLevel} variant="amber" size="sm" />
             <div className="flex justify-between text-xs">
               <span className="text-text-dim">{xpPercent}% concluído</span>
-              <span className="text-text-dim">{(CHARACTER.xpToNext - CHARACTER.xp).toLocaleString()} XP restantes</span>
+              <span className="text-text-dim">{(xpRequiredForCurrentLevel - xpInCurrentLevel).toLocaleString("pt-BR")} XP restantes</span>
             </div>
           </div>
         </CardContent>
@@ -140,11 +194,36 @@ export default function ProfilePage() {
 
       {/* ── Stats Grid ───────────────────────────────────────── */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-        {STATS.map(({ label, value, icon: Icon, color, bg, border }) => (
+        {[
+          { label: "XP Total", value: formatXP(totalXP), icon: Zap, color: "text-amber", bg: "bg-amber/10", border: "border-amber-border" },
+          { label: "Missões", value: String(completedMissions.length), icon: Target, color: "text-blue", bg: "bg-blue/10", border: "border-blue-border" },
+          { label: "Conquistas", value: String(earnedBadges.length), icon: Award, color: "text-emerald", bg: "bg-emerald/10", border: "border-emerald-border" },
+          { label: "Sequência", value: `${currentStreak}d`, icon: Flame, color: "text-rose", bg: "bg-rose/10", border: "border-rose-border" },
+          { label: "Horas", value: formatHours(totalMinutes), icon: Clock, color: "text-sky", bg: "bg-sky/10", border: "border-sky-border" },
+          { label: "Sessões", value: String(sessions.length), icon: Timer, color: "text-blue", bg: "bg-blue/10", border: "border-blue-border" },
+        ].map(({ label, value, icon: Icon, color, bg, border }) => (
           <Card key={label} className={`p-3 text-center border ${border} ${bg}`}>
             <Icon size={16} className={`${color} mx-auto mb-1.5`} />
             <p className="text-lg font-black text-text tabular-nums leading-none">{value}</p>
             <p className="text-xs text-text-muted mt-1">{label}</p>
+          </Card>
+        ))}
+      </div>
+
+      {/* ── Study Stats ──────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total estudado", value: formatHours(totalMinutes), icon: Clock, color: "text-sky" },
+          { label: "Sessões concluídas", value: String(sessions.length), icon: Timer, color: "text-blue" },
+          { label: "Melhor semana", value: formatHours(bestWeekMinutes), icon: BarChart3, color: "text-emerald" },
+          { label: "Média diária", value: formatHours(dailyAverageMinutes), icon: TrendingUp, color: "text-amber" },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <Card key={label} className="p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Icon size={14} className={color} />
+              <p className="text-xs text-text-muted">{label}</p>
+            </div>
+            <p className="text-2xl font-black text-text tabular-nums">{value}</p>
           </Card>
         ))}
       </div>
@@ -163,54 +242,50 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="pt-0">
               <div className="relative">
-                {/* Line */}
                 <div className="absolute left-4 top-4 bottom-4 w-px bg-border" />
                 <div className="space-y-1">
-                  {CAREER_STAGES.map((stage, i) => {
+                  {careerStages.map((stage, i) => {
                     const Icon = stage.icon;
-                    const isCurrent = "current" in stage && stage.current;
                     return (
                       <div
                         key={i}
                         className={`relative flex items-center gap-4 p-3 rounded-xl transition-all ${
-                          isCurrent ? "bg-blue/5 border border-blue/20" :
+                          stage.current ? "bg-blue/5 border border-blue/20" :
                           stage.done ? "opacity-60" : "opacity-40"
                         }`}
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 border ${
-                          isCurrent ? "bg-blue border-blue-border shadow-[0_0_12px_rgba(59,130,246,0.4)]" :
+                          stage.current ? "bg-blue border-blue-border shadow-[0_0_12px_rgba(59,130,246,0.4)]" :
                           stage.done ? "bg-emerald/20 border-emerald-border" :
                           "bg-surface-raised border-border"
                         }`}>
-                          <Icon size={14} className={isCurrent ? "text-white" : stage.done ? "text-emerald" : "text-text-dim"} />
+                          <Icon size={14} className={stage.current ? "text-white" : stage.done ? "text-emerald" : "text-text-dim"} />
                         </div>
                         <div className="flex-1">
-                          <p className={`text-sm font-semibold ${isCurrent ? "text-blue" : stage.done ? "text-text" : "text-text-dim"}`}>
+                          <p className={`text-sm font-semibold ${stage.current ? "text-blue" : stage.done ? "text-text" : "text-text-dim"}`}>
                             {stage.title}
                           </p>
-                          <p className="text-xs text-text-dim">Nível {stage.level}</p>
+                          <p className="text-xs text-text-dim">Nível {stage.minLevel}{stage.minLevel !== stage.maxLevel && stage.maxLevel < 999 ? `–${stage.maxLevel}` : "+"}</p>
                         </div>
-                        {isCurrent && (
-                          <Badge variant="blue">Atual</Badge>
-                        )}
-                        {stage.done && !isCurrent && (
-                          <CheckCircle2 size={14} className="text-emerald" />
-                        )}
+                        {stage.current && <Badge variant="blue">Atual</Badge>}
+                        {stage.done && !stage.current && <CheckCircle2 size={14} className="text-emerald" />}
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="mt-4 p-3 rounded-lg border border-amber/20 bg-amber/5">
-                <div className="flex items-center gap-2 mb-1">
-                  <Crown size={13} className="text-amber" />
-                  <p className="text-xs font-semibold text-text">Próxima classe: Especialista</p>
+              {nextStage && (
+                <div className="mt-4 p-3 rounded-lg border border-amber/20 bg-amber/5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Crown size={13} className="text-amber" />
+                    <p className="text-xs font-semibold text-text">Próxima classe: {nextStage.title}</p>
+                  </div>
+                  <p className="text-xs text-text-muted">Alcance o Nível {nextStage.minLevel} para desbloquear.</p>
+                  <ProgressBar value={currentLevel} max={nextStage.minLevel} variant="amber" size="xs" className="mt-2" />
+                  <p className="text-xs text-text-dim mt-1">Nível {currentLevel}/{nextStage.minLevel}</p>
                 </div>
-                <p className="text-xs text-text-muted">Alcance o Nível 10 para desbloquear o título de Especialista.</p>
-                <ProgressBar value={7} max={10} variant="amber" size="xs" className="mt-2" />
-                <p className="text-xs text-text-dim mt-1">Nível 7/10</p>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -222,30 +297,35 @@ export default function ProfilePage() {
                   <Award size={14} className="text-text-muted" />
                   <h3 className="text-sm font-semibold text-text">Conquistas Recentes</h3>
                 </div>
-                <span className="text-xs text-text-muted">3 de 10</span>
+                <span className="text-xs text-text-muted">{earnedBadges.length} de {BADGE_DEFINITIONS.length}</span>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="grid grid-cols-3 gap-3">
-                {RECENT_BADGES.map((b) => {
-                  const Icon = b.icon;
-                  return (
-                    <div key={b.title} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-surface-raised">
+              {recentEarnedBadges.length === 0 ? (
+                <div className="py-8 text-center">
+                  <Award size={24} className="text-text-dim mx-auto mb-2" />
+                  <p className="text-sm text-text-muted">Complete missões para ganhar conquistas.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  {recentEarnedBadges.map((b) => (
+                    <div key={b.id} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-surface-raised">
                       <div className="w-10 h-10 rounded-xl border border-border bg-surface-overlay flex items-center justify-center">
-                        <Icon size={18} className={b.color} />
+                        <Star size={18} className="text-amber" />
                       </div>
                       <p className="text-xs font-medium text-text text-center leading-tight">{b.title}</p>
-                      <span className="text-xs text-text-dim">{b.rarity}</span>
+                      <span className="text-xs text-text-dim capitalize">{b.rarity}</span>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         {/* Right (2/5) */}
         <div className="xl:col-span-2 space-y-5">
+
           {/* Active Questlines */}
           <Card>
             <CardHeader>
@@ -255,16 +335,29 @@ export default function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-4">
-              {ACTIVE_QUESTLINES.map((q) => (
-                <div key={q.title} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-text">{q.title}</p>
-                    <span className="text-xs text-text-muted">{q.missions}</span>
-                  </div>
-                  <ProgressBar value={q.progress} variant="blue" size="sm" showLabel />
-                  <p className="text-xs text-amber font-medium">⚡ {q.xp} XP</p>
-                </div>
-              ))}
+              {activeQuestlines.length === 0 ? (
+                <p className="text-sm text-text-dim py-2">Nenhuma questline ativa.</p>
+              ) : (
+                activeQuestlines.map((q) => {
+                  const progress = calculateQuestlineProgress(q, missions);
+                  const earned = calculateQuestlineEarnedXP(q, missions);
+                  const total = calculateQuestlineTotalXP(q, missions);
+                  const missionCount = countQuestlineMissions(q);
+                  const completedCount = q.modules.flatMap((m) => m.missionIds).filter(
+                    (mid) => missions.find((m) => m.id === mid)?.status === "completed"
+                  ).length;
+                  return (
+                    <div key={q.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-text">{q.title}</p>
+                        <span className="text-xs text-text-muted">{completedCount}/{missionCount}</span>
+                      </div>
+                      <ProgressBar value={progress} variant="blue" size="sm" showLabel />
+                      <p className="text-xs text-amber font-medium">⚡ {earned.toLocaleString("pt-BR")} / {total.toLocaleString("pt-BR")} XP</p>
+                    </div>
+                  );
+                })
+              )}
             </CardContent>
           </Card>
 
@@ -277,35 +370,42 @@ export default function ProfilePage() {
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
-              {timelineItems.map((item, i) => {
-                const Icon = item.icon;
-                return (
-                  <div key={i} className="flex items-start gap-3 py-2 border-t border-border first:border-0 first:pt-0">
-                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5 bg-surface-overlay border-border`}>
-                      <Icon size={12} className={item.color} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-text-muted">{item.action}</p>
-                      <p className="text-sm font-medium text-text leading-tight">{item.title}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      {item.xp > 0 && (
-                        <span className="text-xs font-semibold text-amber">+{item.xp}</span>
-                      )}
-                      <p className="text-xs text-text-dim mt-0.5">{item.date}</p>
-                    </div>
-                  </div>
-                );
-              })}
+              {recentEvents.length === 0 ? (
+                <p className="text-sm text-text-dim py-2">Nenhuma atividade ainda.</p>
+              ) : (
+                <>
+                  {visibleEvents.map((item) => {
+                    const Icon = EVENT_ICON[item.type] ?? CheckCircle2;
+                    const color = EVENT_COLOR[item.type] ?? "text-text-dim";
+                    return (
+                      <div key={item.id} className="flex items-start gap-3 py-2 border-t border-border first:border-0 first:pt-0">
+                        <div className="w-6 h-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5 bg-surface-overlay border-border">
+                          <Icon size={12} className={color} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-text-muted">{item.type.replace("_", " ")}</p>
+                          <p className="text-sm font-medium text-text leading-tight truncate">{item.title}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {item.xpGained > 0 && (
+                            <span className="text-xs font-semibold text-amber">+{item.xpGained}</span>
+                          )}
+                          <p className="text-xs text-text-dim mt-0.5">{formatRelativeTime(new Date(item.timestamp))}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
 
-              {TIMELINE.length > 3 && (
-                <button
-                  onClick={() => setTimelineExpanded(!timelineExpanded)}
-                  className="flex items-center gap-1 text-xs text-text-muted hover:text-text transition-colors pt-1"
-                >
-                  <ChevronRight size={12} className={`transition-transform ${timelineExpanded ? "rotate-90" : ""}`} />
-                  {timelineExpanded ? "Ver menos" : `Ver mais (${TIMELINE.length - 3})`}
-                </button>
+                  {recentEvents.length > 3 && (
+                    <button
+                      onClick={() => setTimelineExpanded(!timelineExpanded)}
+                      className="flex items-center gap-1 text-xs text-text-muted hover:text-text transition-colors pt-1"
+                    >
+                      <ChevronRight size={12} className={`transition-transform ${timelineExpanded ? "rotate-90" : ""}`} />
+                      {timelineExpanded ? "Ver menos" : `Ver mais (${recentEvents.length - 3})`}
+                    </button>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

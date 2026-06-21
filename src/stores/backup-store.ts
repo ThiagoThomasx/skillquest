@@ -5,6 +5,9 @@ import { useStreakStore } from "./streak-store";
 import { useActivityStore } from "./activity-store";
 import { useUIStore } from "./useUIStore";
 import { useQuestlinesStore } from "./questlines-store";
+import { useDailyQuestStore } from "./daily-quest-store";
+import { useStudySessionStore } from "./study-session-store";
+import { useWeeklyGoalStore } from "./weekly-goal-store";
 
 interface SkillQuestBackup {
   version: string;
@@ -15,12 +18,15 @@ interface SkillQuestBackup {
   badges: ReturnType<typeof useBadgesStore.getState>;
   streak: ReturnType<typeof useStreakStore.getState>;
   activity: ReturnType<typeof useActivityStore.getState>;
+  dailyQuest: ReturnType<typeof useDailyQuestStore.getState>;
+  studySessions: { sessions: ReturnType<typeof useStudySessionStore.getState>["sessions"] };
+  weeklyGoals: ReturnType<typeof useWeeklyGoalStore.getState>;
   ui: { theme: string };
 }
 
 export function exportBackup(): void {
   const backup: SkillQuestBackup = {
-    version: "2.0",
+    version: "3.0",
     exportedAt: new Date().toISOString(),
     progress: useProgressStore.getState(),
     missions: useMissionsStore.getState(),
@@ -28,6 +34,9 @@ export function exportBackup(): void {
     badges: useBadgesStore.getState(),
     streak: useStreakStore.getState(),
     activity: useActivityStore.getState(),
+    dailyQuest: useDailyQuestStore.getState(),
+    studySessions: { sessions: useStudySessionStore.getState().sessions },
+    weeklyGoals: useWeeklyGoalStore.getState(),
     ui: { theme: useUIStore.getState().theme },
   };
 
@@ -66,7 +75,6 @@ export function importBackup(file: File): Promise<void> {
 
         useMissionsStore.setState({ missions: backup.missions.missions });
 
-        // Migrate: restore questlines if v2.0+, else keep current
         if (backup.questlines?.questlines) {
           useQuestlinesStore.setState({ questlines: backup.questlines.questlines });
         }
@@ -78,6 +86,32 @@ export function importBackup(file: File): Promise<void> {
           lastActivityDate: backup.streak.lastActivityDate,
         });
         useActivityStore.setState({ events: backup.activity.events });
+
+        // v3.0+ fields
+        if (backup.dailyQuest) {
+          useDailyQuestStore.setState({
+            dailyQuestId: backup.dailyQuest.dailyQuestId,
+            generatedAt: backup.dailyQuest.generatedAt,
+            completedToday: backup.dailyQuest.completedToday,
+            skippedToday: backup.dailyQuest.skippedToday,
+            focusMinutes: backup.dailyQuest.focusMinutes,
+            dailyGoal: backup.dailyQuest.dailyGoal,
+            dailyNotes: backup.dailyQuest.dailyNotes,
+          });
+        }
+
+        if (backup.studySessions?.sessions) {
+          useStudySessionStore.setState({ sessions: backup.studySessions.sessions });
+        }
+
+        if (backup.weeklyGoals) {
+          useWeeklyGoalStore.setState({
+            missionsGoal: backup.weeklyGoals.missionsGoal,
+            minutesGoal: backup.weeklyGoals.minutesGoal,
+            xpGoal: backup.weeklyGoals.xpGoal,
+          });
+        }
+
         if (backup.ui?.theme) {
           useUIStore.getState().setTheme(backup.ui.theme as "modern" | "pixel-quest" | "fantasy-rpg");
         }
@@ -99,4 +133,7 @@ export function resetJourney(): void {
   useBadgesStore.getState().clearAll();
   useStreakStore.getState().clearAll();
   useActivityStore.getState().clearAll();
+  useDailyQuestStore.getState().clearAll();
+  useStudySessionStore.getState().clearAll();
+  useWeeklyGoalStore.getState().clearAll();
 }

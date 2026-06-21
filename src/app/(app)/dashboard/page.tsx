@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -15,7 +15,8 @@ import {
   Zap, Target, Award, Flame, TrendingUp, ArrowRight,
   CheckCircle2, Clock, ChevronRight, Star, Trophy,
   Sparkles, BarChart3, Skull, Sword, Wand2, Swords,
-  BookOpen, PackageOpen,
+  BookOpen, PackageOpen, RefreshCw, Play, Timer,
+  CalendarDays,
 } from "lucide-react";
 import { useProgressStore } from "@/stores/progress-store";
 import { useMissionsStore } from "@/stores/missions-store";
@@ -23,6 +24,9 @@ import { useBadgesStore } from "@/stores/badges-store";
 import { useStreakStore } from "@/stores/streak-store";
 import { useActivityStore } from "@/stores/activity-store";
 import { useQuestlinesStore } from "@/stores/questlines-store";
+import { useDailyQuestStore } from "@/stores/daily-quest-store";
+import { useStudySessionStore } from "@/stores/study-session-store";
+import { useWeeklyGoalStore } from "@/stores/weekly-goal-store";
 import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { getCareerStage } from "@/engines/career-engine";
 import { formatXP, formatRelativeTime } from "@/utils/format";
@@ -42,14 +46,25 @@ const themes = [
 
 const DIFFICULTY_LABEL: Record<string, string> = { easy: "Fácil", medium: "Médio", hard: "Difícil", legendary: "Lendário" };
 
+const PRIORITY_REASON_ICON: Record<number, React.ElementType> = {
+  1: Timer, 2: BookOpen, 3: Target, 4: Skull, 5: Clock, 6: Zap,
+};
+
 export default function DashboardPage() {
   const { totalXP, currentLevel, xpInCurrentLevel, xpRequiredForCurrentLevel, username } = useProgressStore();
   const { missions } = useMissionsStore();
   const { earned } = useBadgesStore();
   const { currentStreak, bestStreak } = useStreakStore();
   const { events } = useActivityStore();
-
   const { questlines } = useQuestlinesStore();
+  const { sessions, openSession } = useStudySessionStore();
+  const { missionsGoal, minutesGoal, xpGoal } = useWeeklyGoalStore();
+
+  const {
+    dailyQuestId, completedToday, skippedToday, focusMinutes, dailyGoal,
+    refreshIfNeeded, skipDailyQuest,
+  } = useDailyQuestStore();
+
   const career = getCareerStage(currentLevel);
   const completedMissions = missions.filter((m) => m.status === "completed");
   const activeMissions = missions.filter((m) => m.status === "active").slice(0, 3);
@@ -83,19 +98,59 @@ export default function DashboardPage() {
   const maxWeeklyXP = Math.max(...weeklyXPData.map((d) => d.xp), 1);
   const weeklyTotalXP = weeklyXPData.reduce((sum, d) => sum + d.xp, 0);
 
+  // Weekly stats
+  const weekStart = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return d.toISOString().slice(0, 10);
+  }, []);
+
+  const weeklyMissionsCompleted = useMemo(
+    () => completedMissions.filter((m) => m.completedAt && m.completedAt.slice(0, 10) >= weekStart).length,
+    [completedMissions, weekStart]
+  );
+
+  const weeklyMinutes = useMemo(
+    () => sessions
+      .filter((s) => s.startedAt.slice(0, 10) >= weekStart)
+      .reduce((sum, s) => sum + Math.ceil(s.durationSeconds / 60), 0),
+    [sessions, weekStart]
+  );
+
   // Next badge to unlock
   const nextBadge = useMemo(() => {
     const alreadyEarned = earned.filter((b) => b.earned).map((b) => b.id);
     return BADGE_DEFINITIONS.find((b) => !alreadyEarned.includes(b.id)) ?? null;
   }, [earned]);
 
-  // Recent badges for display
   const recentBadges = useMemo(() => {
     return BADGE_DEFINITIONS
       .filter((b) => earned.find((e) => e.id === b.id && e.earned))
       .slice(0, 6);
   }, [earned]);
 
+  // Daily Quest — generate/refresh on mount
+  useEffect(() => {
+    refreshIfNeeded(missions, questlines);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const dailyMission = missions.find((m) => m.id === dailyQuestId) ?? null;
+
+  // Days remaining in week
+  const daysRemainingInWeek = 7 - new Date().getDay();
+
+  function handleStartSession() {
+    if (!dailyMission) return;
+    if (dailyMission.status === "available") {
+      useMissionsStore.getState().startMission(dailyMission.id);
+    }
+    openSession(dailyMission.id, dailyMission.title);
+  }
+
+  function handleSkipQuest() {
+    skipDailyQuest(missions, questlines);
+  }
 
   return (
     <div className="space-y-5 max-w-[1600px]">
@@ -224,6 +279,161 @@ export default function DashboardPage() {
             <p className="text-[11px] text-text-dim mt-1">{delta}</p>
           </Card>
         ))}
+      </div>
+
+      {/* ── Daily Quest ───────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        {/* Daily Quest Card */}
+        <div className="xl:col-span-2">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-text flex items-center gap-2">
+              <Flame size={14} className="text-amber" /> Quest Diária
+            </h2>
+          </div>
+
+          {dailyMission ? (
+            <Card className={`p-5 relative overflow-hidden ${
+              completedToday ? "border-emerald/30 bg-emerald/[0.02]" : "border-amber/20 bg-amber/[0.02]"
+            }`}>
+              {completedToday && (
+                <div className="absolute top-3 right-3">
+                  <span className="text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20 rounded-full px-2 py-0.5">
+                    Concluída hoje!
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-start gap-4">
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
+                  completedToday ? "bg-emerald/10 border-emerald/30" : "bg-amber/10 border-amber/30"
+                }`}>
+                  {completedToday
+                    ? <CheckCircle2 size={22} className="text-emerald" />
+                    : <Flame size={22} className="text-amber" />
+                  }
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className="text-base font-bold text-text">{dailyMission.title}</p>
+                    {dailyMission.isDaily && (
+                      <span className="text-[10px] font-bold bg-amber/10 text-amber border border-amber/20 rounded-full px-2 py-0.5">
+                        Bônus 2×
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-text-muted mb-3">{dailyMission.description}</p>
+
+                  {/* Reason + meta */}
+                  <div className="flex items-center gap-4 flex-wrap text-xs text-text-dim">
+                    <span className="flex items-center gap-1 text-blue font-medium">
+                      <BookOpen size={10} />
+                      {/* reason from store would need separate state; show path title */}
+                      {dailyMission.pathTitle}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={10} /> ~{dailyMission.estimatedMinutes} min
+                    </span>
+                    <span className="flex items-center gap-1 text-amber font-semibold">
+                      <Zap size={10} />
+                      {dailyMission.isDaily ? dailyMission.xpReward * 2 : dailyMission.xpReward} XP
+                    </span>
+                    <span className="capitalize">{DIFFICULTY_LABEL[dailyMission.difficulty] ?? dailyMission.difficulty}</span>
+                  </div>
+
+                  {/* Focus progress today */}
+                  {focusMinutes > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                        <span>{focusMinutes} / {dailyGoal} min estudados hoje</span>
+                        <span>{Math.min(Math.round((focusMinutes / dailyGoal) * 100), 100)}%</span>
+                      </div>
+                      <ProgressBar value={focusMinutes} max={dailyGoal} variant="amber" size="sm" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {!completedToday && (
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+                  <Button
+                    variant="amber"
+                    size="sm"
+                    onClick={handleStartSession}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Play size={13} className="mr-1.5" /> Iniciar Sessão
+                  </Button>
+                  {!skippedToday && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSkipQuest}
+                      title="Trocar quest (1× por dia)"
+                    >
+                      <RefreshCw size={13} className="mr-1.5" /> Trocar Quest
+                    </Button>
+                  )}
+                </div>
+              )}
+            </Card>
+          ) : (
+            <Card className="p-8 text-center">
+              <Flame size={28} className="text-text-dim mx-auto mb-3" />
+              <p className="text-sm font-semibold text-text">Nenhuma quest disponível</p>
+              <p className="text-xs text-text-muted mt-1">Complete as missões existentes para desbloquear mais.</p>
+            </Card>
+          )}
+        </div>
+
+        {/* Meta Semanal */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CalendarDays size={14} className="text-blue" />
+              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Meta Semanal</p>
+            </div>
+            <span className="text-[11px] text-text-dim">{daysRemainingInWeek}d restantes</span>
+          </div>
+
+          <div className="space-y-4">
+            {/* Missions */}
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-text-muted flex items-center gap-1"><Target size={10} /> Missões</span>
+                <span className="font-semibold text-text">{weeklyMissionsCompleted}/{missionsGoal}</span>
+              </div>
+              <ProgressBar value={weeklyMissionsCompleted} max={missionsGoal} variant="blue" size="sm" />
+            </div>
+
+            {/* Minutes */}
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-text-muted flex items-center gap-1"><Clock size={10} /> Minutos</span>
+                <span className="font-semibold text-text">{weeklyMinutes}/{minutesGoal}</span>
+              </div>
+              <ProgressBar value={weeklyMinutes} max={minutesGoal} variant="emerald" size="sm" />
+            </div>
+
+            {/* XP */}
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-text-muted flex items-center gap-1"><Zap size={10} /> XP</span>
+                <span className="font-semibold text-amber">{weeklyTotalXP}/{xpGoal}</span>
+              </div>
+              <ProgressBar value={weeklyTotalXP} max={xpGoal} variant="amber" size="sm" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-[11px] text-text-dim">
+              {weeklyMissionsCompleted >= missionsGoal && weeklyMinutes >= minutesGoal
+                ? "Meta semanal atingida!"
+                : `${missionsGoal - weeklyMissionsCompleted > 0 ? `${missionsGoal - weeklyMissionsCompleted} missões restantes` : "Missões ok"} · ${minutesGoal - weeklyMinutes > 0 ? `${minutesGoal - weeklyMinutes} min restantes` : "Tempo ok"}`}
+            </p>
+          </div>
+        </Card>
       </div>
 
       {/* ── Missões em Andamento + Atividade Recente ──────────── */}
