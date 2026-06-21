@@ -6,18 +6,18 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import {
   User, Bell, Palette, Shield, Download, Upload,
-  AlertTriangle, ChevronRight, RefreshCw, Check, X, Pencil,
+  AlertTriangle, RefreshCw, Check, X, Pencil,
 } from "lucide-react";
 import { exportBackup, importBackup, resetJourney } from "@/stores/backup-store";
 import { useProgressStore } from "@/stores/progress-store";
-import { useUIStore } from "@/stores/useUIStore";
-import Link from "next/link";
+import { useUIStore, type AppTheme } from "@/stores/useUIStore";
+import { ThemeOptionCard } from "@/features/dashboard";
 
-const THEME_LABELS: Record<string, string> = {
-  modern: "Moderno (padrão)",
-  "pixel-quest": "Pixel Quest",
-  "fantasy-rpg": "Fantasy RPG",
-};
+const THEMES: Array<{ name: string; themeKey: AppTheme; colors: string[]; description: string }> = [
+  { name: "Moderno", themeKey: "modern", colors: ["#081120", "#0F1A2D", "#3B82F6", "#F59E0B"], description: "Navy premium — padrão" },
+  { name: "Pixel Quest", themeKey: "pixel-quest", colors: ["#0d0d1a", "#1a0d2e", "#7c3aed", "#22C55E"], description: "Cyberpunk roxo-neón" },
+  { name: "Fantasy RPG", themeKey: "fantasy-rpg", colors: ["#120808", "#2d1212", "#c2410c", "#ca8a04"], description: "Fogo e ouro épico" },
+];
 
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -122,16 +122,13 @@ export default function SettingsPage() {
           </div>
         </CardHeader>
         <CardContent className="pt-0 space-y-0 divide-y divide-border">
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="text-sm font-medium text-text">Tema visual</p>
-              <p className="text-xs text-text-muted mt-0.5">{THEME_LABELS[theme] ?? theme}</p>
+          <div className="py-3">
+            <p className="text-sm font-medium text-text mb-3">Tema visual</p>
+            <div className="grid grid-cols-3 gap-3">
+              {THEMES.map((t) => (
+                <ThemeOptionCard key={t.themeKey} {...t} />
+              ))}
             </div>
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="gap-1">
-                Mudar <ChevronRight size={14} />
-              </Button>
-            </Link>
           </div>
           <div className="flex items-center justify-between py-3">
             <div>

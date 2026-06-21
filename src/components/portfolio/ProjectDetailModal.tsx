@@ -115,7 +115,10 @@ export function ProjectDetailModal({ project, onClose, onDelete }: Props) {
 
   return (
     <Dialog open={!!project} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-4xl w-[calc(100%-2rem)] max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden bg-surface border-border"
+      >
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -158,6 +161,13 @@ export function ProjectDetailModal({ project, onClose, onDelete }: Props) {
                   Editar
                 </Button>
               )}
+              <button
+                onClick={onClose}
+                className="ml-1 w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-text hover:bg-surface-overlay transition-colors"
+                aria-label="Fechar"
+              >
+                <X size={15} />
+              </button>
             </div>
           </div>
         </DialogHeader>
