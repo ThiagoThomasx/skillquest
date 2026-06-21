@@ -256,7 +256,7 @@ export default function MissionsPage() {
   const hasDaily       = missions.some((m) => m.isDaily && m.status !== "completed");
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-[1400px]">
       <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-raised via-surface to-surface-raised p-6">
         <div className="absolute inset-0 bg-gradient-to-r from-blue/5 via-transparent to-rose/5 pointer-events-none" />
         <div className="relative flex items-center justify-between flex-wrap gap-4">
@@ -297,7 +297,7 @@ export default function MissionsPage() {
         ))}
       </div>
 
-      <div className="space-y-3">
+      <div>
         {filtered.length === 0 ? (
           <div className="text-center py-16">
             <PackageOpen size={36} className="text-text-dim mx-auto mb-3" />
@@ -307,16 +307,18 @@ export default function MissionsPage() {
             </p>
           </div>
         ) : (
-          filtered.map((m) => (
-            <QuestCard
-              key={m.id}
-              m={m}
-              expanded={expandedId === m.id}
-              onToggle={() => setExpandedId(expandedId === m.id ? null : m.id)}
-              onStart={() => startMission(m.id)}
-              onComplete={() => completeMission(m.id)}
-            />
-          ))
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {filtered.map((m) => (
+              <QuestCard
+                key={m.id}
+                m={m}
+                expanded={expandedId === m.id}
+                onToggle={() => setExpandedId(expandedId === m.id ? null : m.id)}
+                onStart={() => startMission(m.id)}
+                onComplete={() => completeMission(m.id)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

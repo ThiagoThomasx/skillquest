@@ -56,7 +56,7 @@ export default function BadgesPage() {
     .reduce((sum, b) => sum + b.xpReward, 0);
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-[1600px]">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-raised via-surface to-surface-raised p-6">
         <div className="absolute inset-0 bg-gradient-to-r from-amber/5 via-transparent to-sky/5 pointer-events-none" />
@@ -137,42 +137,34 @@ export default function BadgesPage() {
           <p className="text-xs text-text-muted mt-1">Tente outro filtro.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {badges.map((b) => {
             const cfg = RARITY_CONFIG[b.rarity as Rarity];
             const Icon = ICON_MAP[b.icon] ?? Star;
             return (
               <Card
                 key={b.id}
-                className={`p-4 transition-all ${b.isEarned ? cfg.glow : "opacity-60"}`}
+                className={`p-4 flex flex-col items-center text-center transition-all ${b.isEarned ? cfg.glow : "opacity-50"}`}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${b.isEarned ? `${cfg.bg} ${cfg.border}` : "bg-surface-overlay border-border"}`}>
-                    {b.isEarned ? (
-                      <Icon size={20} className={cfg.color} />
-                    ) : (
-                      <Lock size={18} className="text-text-dim" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-bold text-text">{b.title}</p>
-                      <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.label}</span>
-                    </div>
-                    <p className="text-xs text-text-muted">{b.isEarned ? b.description : b.howToUnlock}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex items-center gap-1">
-                        <Zap size={10} className="text-amber" />
-                        <span className="text-xs font-bold text-amber">+{b.xpReward} XP</span>
-                      </div>
-                      {b.isEarned && b.earnedAt && (
-                        <span className="text-[10px] text-text-dim">
-                          {new Date(b.earnedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center mb-3 ${b.isEarned ? `${cfg.bg} ${cfg.border}` : "bg-surface-overlay border-border"}`}>
+                  {b.isEarned ? (
+                    <Icon size={24} className={cfg.color} />
+                  ) : (
+                    <Lock size={20} className="text-text-dim" />
+                  )}
                 </div>
+                <p className="text-xs font-bold text-text leading-tight mb-0.5">{b.title}</p>
+                <span className={`text-[10px] font-semibold ${cfg.color} mb-2`}>{cfg.label}</span>
+                <p className="text-[10px] text-text-muted leading-snug line-clamp-2 mb-2">{b.isEarned ? b.description : b.howToUnlock}</p>
+                <div className="flex items-center gap-1 mt-auto">
+                  <Zap size={9} className="text-amber" />
+                  <span className="text-[10px] font-bold text-amber">+{b.xpReward} XP</span>
+                </div>
+                {b.isEarned && b.earnedAt && (
+                  <span className="text-[9px] text-text-dim mt-1">
+                    {new Date(b.earnedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                  </span>
+                )}
               </Card>
             );
           })}

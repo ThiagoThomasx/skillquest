@@ -233,7 +233,7 @@ export default function ExplorePage() {
   );
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6 max-w-[1600px]">
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-blue/20 bg-gradient-to-br from-blue/10 via-surface to-surface-raised p-6">
@@ -386,7 +386,7 @@ export default function ExplorePage() {
 
       {/* ── Grid ──────────────────────────────────────────────────────────── */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((tpl) => (
             <ExploreCard key={tpl.templateId} tpl={tpl} />
           ))}

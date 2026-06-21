@@ -134,7 +134,7 @@ export default function ProfilePage() {
     .toUpperCase();
 
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="space-y-5 max-w-[1400px]">
 
       {/* ── Character Header ──────────────────────────────────── */}
       <Card className="overflow-hidden">
@@ -192,46 +192,30 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* ── Stats Grid ───────────────────────────────────────── */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      {/* ── Stats + Study Stats numa linha densa ──────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         {[
           { label: "XP Total", value: formatXP(totalXP), icon: Zap, color: "text-amber", bg: "bg-amber/10", border: "border-amber-border" },
           { label: "Missões", value: String(completedMissions.length), icon: Target, color: "text-blue", bg: "bg-blue/10", border: "border-blue-border" },
           { label: "Conquistas", value: String(earnedBadges.length), icon: Award, color: "text-emerald", bg: "bg-emerald/10", border: "border-emerald-border" },
           { label: "Sequência", value: `${currentStreak}d`, icon: Flame, color: "text-rose", bg: "bg-rose/10", border: "border-rose-border" },
-          { label: "Horas", value: formatHours(totalMinutes), icon: Clock, color: "text-sky", bg: "bg-sky/10", border: "border-sky-border" },
+          { label: "Total estudado", value: formatHours(totalMinutes), icon: Clock, color: "text-sky", bg: "bg-sky/10", border: "border-sky-border" },
           { label: "Sessões", value: String(sessions.length), icon: Timer, color: "text-blue", bg: "bg-blue/10", border: "border-blue-border" },
+          { label: "Melhor semana", value: formatHours(bestWeekMinutes), icon: BarChart3, color: "text-emerald", bg: "bg-emerald/10", border: "border-emerald-border" },
+          { label: "Média diária", value: formatHours(dailyAverageMinutes), icon: TrendingUp, color: "text-amber", bg: "bg-amber/10", border: "border-amber-border" },
         ].map(({ label, value, icon: Icon, color, bg, border }) => (
           <Card key={label} className={`p-3 text-center border ${border} ${bg}`}>
-            <Icon size={16} className={`${color} mx-auto mb-1.5`} />
-            <p className="text-lg font-black text-text tabular-nums leading-none">{value}</p>
-            <p className="text-xs text-text-muted mt-1">{label}</p>
+            <Icon size={14} className={`${color} mx-auto mb-1.5`} />
+            <p className="text-base font-black text-text tabular-nums leading-none">{value}</p>
+            <p className="text-[10px] text-text-muted mt-1 leading-tight">{label}</p>
           </Card>
         ))}
       </div>
 
-      {/* ── Study Stats ──────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Total estudado", value: formatHours(totalMinutes), icon: Clock, color: "text-sky" },
-          { label: "Sessões concluídas", value: String(sessions.length), icon: Timer, color: "text-blue" },
-          { label: "Melhor semana", value: formatHours(bestWeekMinutes), icon: BarChart3, color: "text-emerald" },
-          { label: "Média diária", value: formatHours(dailyAverageMinutes), icon: TrendingUp, color: "text-amber" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon size={14} className={color} />
-              <p className="text-xs text-text-muted">{label}</p>
-            </div>
-            <p className="text-2xl font-black text-text tabular-nums">{value}</p>
-          </Card>
-        ))}
-      </div>
-
-      {/* ── Bottom two-col layout ─────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+      {/* ── Bottom three-col layout ───────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-5">
         {/* Left (3/5) */}
-        <div className="xl:col-span-3 space-y-5">
+        <div className="lg:col-span-2 xl:col-span-3 space-y-5">
           {/* Career Journey */}
           <Card>
             <CardHeader>
@@ -324,7 +308,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Right (2/5) */}
-        <div className="xl:col-span-2 space-y-5">
+        <div className="lg:col-span-1 xl:col-span-2 space-y-5">
 
           {/* Active Questlines */}
           <Card>

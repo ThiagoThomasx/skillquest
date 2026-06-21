@@ -932,7 +932,7 @@ export default function PathsPage() {
   const archived = questlines.filter((q) => q.status === "archived");
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-[1400px]">
       {/* Header */}
       <div className="relative overflow-hidden rounded-2xl border border-blue/20 bg-gradient-to-br from-blue/10 via-surface to-surface-raised p-6">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue/5 rounded-full -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -995,17 +995,19 @@ export default function PathsPage() {
                     <Swords size={14} className="text-amber" />
                     <h2 className="text-xs font-bold text-text uppercase tracking-widest">Ativa</h2>
                   </div>
-                  {active.map((q) => (
-                    <QuestlineCard
-                      key={q.id}
-                      q={q}
-                      allMissions={missions}
-                      onEdit={() => setEditingQuestline(q)}
-                      onDelete={() => setDeletingQuestline(q.id)}
-                      onArchive={() => archiveQuestline(q.id)}
-                      onDuplicate={() => duplicateQuestline(q.id)}
-                    />
-                  ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {active.map((q) => (
+                      <QuestlineCard
+                        key={q.id}
+                        q={q}
+                        allMissions={missions}
+                        onEdit={() => setEditingQuestline(q)}
+                        onDelete={() => setDeletingQuestline(q.id)}
+                        onArchive={() => archiveQuestline(q.id)}
+                        onDuplicate={() => duplicateQuestline(q.id)}
+                      />
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -1015,17 +1017,19 @@ export default function PathsPage() {
                     <Star size={14} className="text-text-muted" />
                     <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Disponíveis</h2>
                   </div>
-                  {available.map((q) => (
-                    <QuestlineCard
-                      key={q.id}
-                      q={q}
-                      allMissions={missions}
-                      onEdit={() => setEditingQuestline(q)}
-                      onDelete={() => setDeletingQuestline(q.id)}
-                      onArchive={() => archiveQuestline(q.id)}
-                      onDuplicate={() => duplicateQuestline(q.id)}
-                    />
-                  ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {available.map((q) => (
+                      <QuestlineCard
+                        key={q.id}
+                        q={q}
+                        allMissions={missions}
+                        onEdit={() => setEditingQuestline(q)}
+                        onDelete={() => setDeletingQuestline(q.id)}
+                        onArchive={() => archiveQuestline(q.id)}
+                        onDuplicate={() => duplicateQuestline(q.id)}
+                      />
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -1035,17 +1039,19 @@ export default function PathsPage() {
                     <Trophy size={14} className="text-emerald" />
                     <h2 className="text-xs font-bold text-emerald uppercase tracking-widest">Concluídas</h2>
                   </div>
-                  {completed.map((q) => (
-                    <QuestlineCard
-                      key={q.id}
-                      q={q}
-                      allMissions={missions}
-                      onEdit={() => setEditingQuestline(q)}
-                      onDelete={() => setDeletingQuestline(q.id)}
-                      onArchive={() => archiveQuestline(q.id)}
-                      onDuplicate={() => duplicateQuestline(q.id)}
-                    />
-                  ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {completed.map((q) => (
+                      <QuestlineCard
+                        key={q.id}
+                        q={q}
+                        allMissions={missions}
+                        onEdit={() => setEditingQuestline(q)}
+                        onDelete={() => setDeletingQuestline(q.id)}
+                        onArchive={() => archiveQuestline(q.id)}
+                        onDuplicate={() => duplicateQuestline(q.id)}
+                      />
+                    ))}
+                  </div>
                 </section>
               )}
 
@@ -1055,17 +1061,19 @@ export default function PathsPage() {
                     <Archive size={14} className="text-text-dim" />
                     <h2 className="text-xs font-bold text-text-dim uppercase tracking-widest">Arquivadas</h2>
                   </div>
-                  {archived.map((q) => (
-                    <QuestlineCard
-                      key={q.id}
-                      q={q}
-                      allMissions={missions}
-                      onEdit={() => setEditingQuestline(q)}
-                      onDelete={() => setDeletingQuestline(q.id)}
-                      onArchive={() => archiveQuestline(q.id)}
-                      onDuplicate={() => duplicateQuestline(q.id)}
-                    />
-                  ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {archived.map((q) => (
+                      <QuestlineCard
+                        key={q.id}
+                        q={q}
+                        allMissions={missions}
+                        onEdit={() => setEditingQuestline(q)}
+                        onDelete={() => setDeletingQuestline(q.id)}
+                        onArchive={() => archiveQuestline(q.id)}
+                        onDuplicate={() => duplicateQuestline(q.id)}
+                      />
+                    ))}
+                  </div>
                 </section>
               )}
             </>
