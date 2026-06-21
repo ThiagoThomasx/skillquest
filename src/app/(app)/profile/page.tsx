@@ -9,8 +9,9 @@ import {
   Zap, Target, Award, Flame, Calendar, Edit, Shield,
   Star, Trophy, Sword, BookOpen, Crown, ChevronRight,
   TrendingUp, MapPin, Sparkles, Clock, CheckCircle2,
-  Timer, BarChart3,
+  Timer, BarChart3, Briefcase, Rocket, ArrowRight, Code2,
 } from "lucide-react";
+
 import { useProgressStore } from "@/stores/progress-store";
 import { useMissionsStore } from "@/stores/missions-store";
 import { useBadgesStore } from "@/stores/badges-store";
@@ -18,6 +19,8 @@ import { useStreakStore } from "@/stores/streak-store";
 import { useActivityStore } from "@/stores/activity-store";
 import { useQuestlinesStore } from "@/stores/questlines-store";
 import { useStudySessionStore } from "@/stores/study-session-store";
+import { usePortfolioStore } from "@/stores/portfolio-store";
+import Link from "next/link";
 import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { getCareerStage } from "@/engines/career-engine";
 import {
@@ -69,6 +72,7 @@ export default function ProfilePage() {
   const { events } = useActivityStore();
   const { questlines } = useQuestlinesStore();
   const { sessions } = useStudySessionStore();
+  const { projects: portfolioProjects } = usePortfolioStore();
 
   const [timelineExpanded, setTimelineExpanded] = useState(false);
 
@@ -341,6 +345,85 @@ export default function ProfilePage() {
                     </div>
                   );
                 })
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Portfolio Showcase */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Briefcase size={14} className="text-text-muted" />
+                  <h3 className="text-sm font-semibold text-text">Portfolio Showcase</h3>
+                </div>
+                <Link href="/portfolio">
+                  <button className="flex items-center gap-1 text-xs text-text-muted hover:text-blue transition-colors">
+                    Ver tudo <ArrowRight size={11} />
+                  </button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {portfolioProjects.length === 0 ? (
+                <div className="py-4 text-center">
+                  <Briefcase size={24} className="text-text-muted mx-auto mb-2" />
+                  <p className="text-sm text-text-muted">Nenhum projeto no portfólio ainda.</p>
+                  <Link href="/portfolio">
+                    <button className="text-xs text-blue hover:underline mt-1">Criar primeiro projeto →</button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Stats row */}
+                  <div className="grid grid-cols-3 gap-2 pb-3 border-b border-border">
+                    {[
+                      { label: "Projetos",  value: portfolioProjects.length,                                                       color: "text-blue" },
+                      { label: "Concluídos", value: portfolioProjects.filter(p => p.status === "completed" || p.status === "published").length, color: "text-emerald" },
+                      { label: "Skills",    value: Array.from(new Set(portfolioProjects.flatMap(p => p.skills))).length,           color: "text-amber" },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="text-center">
+                        <p className={`text-lg font-bold ${color}`}>{value}</p>
+                        <p className="text-[10px] text-text-muted">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Recent projects */}
+                  {portfolioProjects.slice(0, 3).map((p) => (
+                    <div key={p.id} className="flex items-center gap-3 py-1.5 border-t border-border first:border-0 first:pt-0">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                        p.status === "published" ? "bg-sky/10 border border-sky/20" :
+                        p.status === "completed" ? "bg-emerald/10 border border-emerald/20" :
+                        "bg-blue/10 border border-blue/20"
+                      }`}>
+                        {p.status === "published" ? <Rocket size={12} className="text-sky" /> :
+                         p.status === "completed" ? <CheckCircle2 size={12} className="text-emerald" /> :
+                         <Code2 size={12} className="text-blue" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-text truncate">{p.title}</p>
+                        {p.skills.length > 0 && (
+                          <p className="text-[10px] text-text-muted truncate">{p.skills.slice(0, 3).join(", ")}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* All skills */}
+                  {Array.from(new Set(portfolioProjects.flatMap(p => p.skills))).length > 0 && (
+                    <div className="pt-3 border-t border-border">
+                      <p className="text-[10px] text-text-muted mb-2">Skills demonstradas</p>
+                      <div className="flex flex-wrap gap-1">
+                        {Array.from(new Set(portfolioProjects.flatMap(p => p.skills))).slice(0, 10).map((skill) => (
+                          <span key={skill} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue/10 text-blue border border-blue/15">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

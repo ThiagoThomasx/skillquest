@@ -14,6 +14,7 @@ import {
   Flame,
   Star,
   Compass,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/paths", label: "Trilhas", icon: BookOpen },
   { href: "/missions", label: "Missões", icon: Target },
   { href: "/badges", label: "Conquistas", icon: Award },
+  { href: "/portfolio", label: "Portfólio", icon: Briefcase },
   { href: "/profile", label: "Perfil", icon: User },
   { href: "/settings", label: "Configurações", icon: Settings },
 ];

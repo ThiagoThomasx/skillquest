@@ -9,8 +9,11 @@ import {
   Target, Clock, Zap, CheckCircle2, Skull, Sword,
   Star, BookOpen, ChevronRight, Flame, ArrowRight, Lock, PackageOpen,
   ExternalLink, FileText, Video, Code2, FlaskConical, FolderOpen, Lightbulb, Trophy,
+  Briefcase,
 } from "lucide-react";
 import { useMissionsStore, type StoredMission, type MissionResource } from "@/stores/missions-store";
+import { usePortfolioStore } from "@/stores/portfolio-store";
+import { generateReadmeDraft, generateLinkedInDraft } from "@/utils/portfolio-generators";
 
 const RESOURCE_ICONS: Record<MissionResource["type"], React.ReactNode> = {
   article:       <FileText size={11} />,
@@ -46,12 +49,16 @@ function QuestCard({
   onToggle,
   onStart,
   onComplete,
+  onAddToPortfolio,
+  alreadyInPortfolio,
 }: {
   m: StoredMission;
   expanded: boolean;
   onToggle: () => void;
   onStart: () => void;
   onComplete: () => void;
+  onAddToPortfolio: () => void;
+  alreadyInPortfolio: boolean;
 }) {
   const diff = DIFFICULTY_CONFIG[m.difficulty] ?? { variant: "blue" as const, label: m.difficulty };
   const isCompleted = m.status === "completed";
@@ -202,6 +209,26 @@ function QuestCard({
                   </div>
                 )}
 
+                {/* Portfolio Evidence CTA */}
+                {(m.status === "completed" || m.isBoss || m.isMainQuest) && (
+                  <div className="flex items-center justify-between rounded-xl bg-blue/5 border border-blue/15 px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <Briefcase size={13} className="text-blue" />
+                      <p className="text-xs font-medium text-text">
+                        {alreadyInPortfolio ? "Já no portfólio" : "Criar evidência de portfólio"}
+                      </p>
+                    </div>
+                    {!alreadyInPortfolio ? (
+                      <Button size="sm" variant="ghost" className="text-xs border border-blue/20 hover:bg-blue/10"
+                        onClick={onAddToPortfolio}>
+                        + Adicionar
+                      </Button>
+                    ) : (
+                      <CheckCircle2 size={14} className="text-emerald" />
+                    )}
+                  </div>
+                )}
+
                 {/* Recursos de Aprendizado */}
                 {m.resources && m.resources.length > 0 && (
                   <div>
@@ -242,6 +269,34 @@ export default function MissionsPage() {
   const [filter, setFilter] = useState<Filter>("Todas");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { missions, startMission, completeMission } = useMissionsStore();
+  const { projects: portfolioProjects, addProject: addPortfolioProject } = usePortfolioStore();
+
+  function handleAddMissionToPortfolio(m: StoredMission) {
+    const now = new Date().toISOString();
+    const base = {
+      title: m.title,
+      description: m.description,
+      category: m.pathTitle ?? "",
+      sourceType: "mission" as const,
+      sourceId: m.id,
+      missionId: m.id,
+      status: m.status === "completed" ? "completed" as const : "in_progress" as const,
+      difficulty: m.difficulty,
+      skills: [],
+      deliverables: m.objectives,
+      repositoryUrl: "",
+      liveUrl: "",
+      notes: "",
+      readmeDraft: "",
+      linkedinDraft: "",
+      completedAt: m.status === "completed" ? (m.completedAt ?? now) : null,
+    };
+    addPortfolioProject({
+      ...base,
+      readmeDraft: generateReadmeDraft({ ...base, id: "", createdAt: now, updatedAt: now }),
+      linkedinDraft: generateLinkedInDraft({ ...base, id: "", createdAt: now, updatedAt: now }),
+    });
+  }
 
   const filtered = missions.filter((m) => {
     if (filter === "Ativas")      return m.status === "active";
@@ -316,6 +371,8 @@ export default function MissionsPage() {
                 onToggle={() => setExpandedId(expandedId === m.id ? null : m.id)}
                 onStart={() => startMission(m.id)}
                 onComplete={() => completeMission(m.id)}
+                onAddToPortfolio={() => handleAddMissionToPortfolio(m)}
+                alreadyInPortfolio={portfolioProjects.some((p) => p.sourceId === m.id)}
               />
             ))}
           </div>

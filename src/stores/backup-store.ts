@@ -8,6 +8,7 @@ import { useQuestlinesStore } from "./questlines-store";
 import { useDailyQuestStore } from "./daily-quest-store";
 import { useStudySessionStore } from "./study-session-store";
 import { useWeeklyGoalStore } from "./weekly-goal-store";
+import { usePortfolioStore } from "./portfolio-store";
 
 interface SkillQuestBackup {
   version: string;
@@ -21,6 +22,7 @@ interface SkillQuestBackup {
   dailyQuest: ReturnType<typeof useDailyQuestStore.getState>;
   studySessions: { sessions: ReturnType<typeof useStudySessionStore.getState>["sessions"] };
   weeklyGoals: ReturnType<typeof useWeeklyGoalStore.getState>;
+  portfolio: { projects: ReturnType<typeof usePortfolioStore.getState>["projects"] };
   ui: { theme: string };
 }
 
@@ -37,6 +39,7 @@ export function exportBackup(): void {
     dailyQuest: useDailyQuestStore.getState(),
     studySessions: { sessions: useStudySessionStore.getState().sessions },
     weeklyGoals: useWeeklyGoalStore.getState(),
+    portfolio: { projects: usePortfolioStore.getState().projects },
     ui: { theme: useUIStore.getState().theme },
   };
 
@@ -112,6 +115,10 @@ export function importBackup(file: File): Promise<void> {
           });
         }
 
+        if (backup.portfolio?.projects) {
+          usePortfolioStore.setState({ projects: backup.portfolio.projects });
+        }
+
         if (backup.ui?.theme) {
           useUIStore.getState().setTheme(backup.ui.theme as "modern" | "pixel-quest" | "fantasy-rpg");
         }
@@ -136,4 +143,5 @@ export function resetJourney(): void {
   useDailyQuestStore.getState().clearAll();
   useStudySessionStore.getState().clearAll();
   useWeeklyGoalStore.getState().clearAll();
+  usePortfolioStore.getState().clearAll();
 }

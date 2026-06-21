@@ -17,7 +17,7 @@ import {
   CheckCircle2, Clock, ChevronRight, Star, Trophy,
   Sparkles, BarChart3, Skull, Sword, Wand2, Swords,
   BookOpen, PackageOpen, RefreshCw, Play, Timer,
-  CalendarDays, Layers, Map, Lock, Compass,
+  CalendarDays, Layers, Map, Lock, Compass, Briefcase, Plus,
 } from "lucide-react";
 import { useProgressStore } from "@/stores/progress-store";
 import { useMissionsStore } from "@/stores/missions-store";
@@ -28,6 +28,8 @@ import { useQuestlinesStore } from "@/stores/questlines-store";
 import { useDailyQuestStore } from "@/stores/daily-quest-store";
 import { useStudySessionStore } from "@/stores/study-session-store";
 import { useWeeklyGoalStore } from "@/stores/weekly-goal-store";
+import { usePortfolioStore } from "@/stores/portfolio-store";
+import { generateReadmeDraft, generateLinkedInDraft } from "@/utils/portfolio-generators";
 import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { getCareerStage } from "@/engines/career-engine";
 import { formatXP, formatRelativeTime } from "@/utils/format";
@@ -65,6 +67,7 @@ export default function DashboardPage() {
   const { questlines } = useQuestlinesStore();
   const { sessions, openSession } = useStudySessionStore();
   const { missionsGoal, minutesGoal, xpGoal } = useWeeklyGoalStore();
+  const { projects: portfolioProjects, addProject: addPortfolioProject } = usePortfolioStore();
 
   const {
     dailyQuestId, completedToday, skippedToday, focusMinutes, dailyGoal,
@@ -821,7 +824,53 @@ export default function DashboardPage() {
                 {activeBoss.bossBattle.status === "available" ? (
                   <p className="text-xs text-amber font-semibold">Disponível! Acesse Questlines para batalhar.</p>
                 ) : activeBoss.bossBattle.status === "completed" ? (
-                  <p className="text-xs text-emerald font-semibold">Boss derrotado! Questline concluída.</p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-emerald font-semibold">Boss derrotado! Questline concluída.</p>
+                    {!portfolioProjects.some((p) => p.sourceId === activeBoss.bossBattle.id) && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="w-full flex items-center gap-1.5 text-xs border border-blue/20 hover:bg-blue/5"
+                        onClick={() => {
+                          const now = new Date().toISOString();
+                          const base = {
+                            title: activeBoss.bossBattle.title,
+                            description: activeBoss.bossBattle.description,
+                            category: activeBoss.category,
+                            sourceType: "boss_battle" as const,
+                            sourceId: activeBoss.bossBattle.id,
+                            questlineId: activeBoss.id,
+                            status: "completed" as const,
+                            difficulty: activeBoss.difficulty,
+                            skills: [],
+                            deliverables: activeBoss.bossBattle.requirements,
+                            repositoryUrl: "",
+                            liveUrl: "",
+                            notes: "",
+                            readmeDraft: "",
+                            linkedinDraft: "",
+                            completedAt: activeBoss.bossBattle.completedAt,
+                          };
+                          addPortfolioProject({
+                            ...base,
+                            readmeDraft: generateReadmeDraft({ ...base, id: "", createdAt: now, updatedAt: now }),
+                            linkedinDraft: generateLinkedInDraft({ ...base, id: "", createdAt: now, updatedAt: now }),
+                          });
+                        }}
+                      >
+                        <Briefcase size={12} />
+                        Adicionar ao Portfólio
+                      </Button>
+                    )}
+                    {portfolioProjects.some((p) => p.sourceId === activeBoss.bossBattle.id) && (
+                      <Link href="/portfolio">
+                        <Button size="sm" variant="ghost" className="w-full text-xs text-emerald border border-emerald/20">
+                          <CheckCircle2 size={12} />
+                          No portfólio ✓
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <ProgressBar value={calculateQuestlineProgress(activeBoss, missions)} variant="rose" size="sm" className="mb-2" />
@@ -834,6 +883,53 @@ export default function DashboardPage() {
             )}
           </div>
         </Card>
+      </div>
+
+      {/* ── Portfolio Progress ────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Briefcase size={14} className="text-text-muted" />
+            <h2 className="text-sm font-bold text-text">Portfolio Builder</h2>
+          </div>
+          <Link href="/portfolio">
+            <Button variant="ghost" size="sm" className="flex items-center gap-1 text-xs">
+              Ver portfólio <ArrowRight size={11} />
+            </Button>
+          </Link>
+        </div>
+
+        {portfolioProjects.length === 0 ? (
+          <Card className="p-5 flex items-center gap-4 border-dashed border-border/60">
+            <div className="w-10 h-10 rounded-xl bg-blue/10 border border-blue/20 flex items-center justify-center shrink-0">
+              <Briefcase size={18} className="text-blue" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-text">Comece seu portfólio</p>
+              <p className="text-xs text-text-muted">Transforme missões e Boss Battles em evidências reais de aprendizado.</p>
+            </div>
+            <Link href="/portfolio">
+              <Button size="sm" className="flex items-center gap-1.5 shrink-0">
+                <Plus size={13} />
+                Criar projeto
+              </Button>
+            </Link>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Em andamento", value: portfolioProjects.filter(p => p.status === "in_progress").length, color: "text-amber" },
+              { label: "Concluídos",   value: portfolioProjects.filter(p => p.status === "completed" || p.status === "published").length, color: "text-emerald" },
+              { label: "Publicados",   value: portfolioProjects.filter(p => p.status === "published").length, color: "text-sky" },
+              { label: "Skills",       value: Array.from(new Set(portfolioProjects.flatMap(p => p.skills))).length, color: "text-blue" },
+            ].map(({ label, value, color }) => (
+              <Card key={label} className="p-4 text-center">
+                <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                <p className="text-[10px] text-text-muted mt-0.5">{label}</p>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Tema Visual ───────────────────────────────────────── */}
