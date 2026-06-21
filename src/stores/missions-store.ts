@@ -8,6 +8,13 @@ import { useBadgesStore } from "./badges-store";
 export type MissionStatus = "locked" | "available" | "active" | "completed";
 export type Difficulty = "easy" | "medium" | "hard" | "legendary";
 
+export interface MissionResource {
+  title: string;
+  type: "article" | "video" | "documentation" | "practice" | "lab" | "project";
+  url: string;
+  estimatedMinutes: number;
+}
+
 export interface StoredMission {
   id: string;
   title: string;
@@ -27,6 +34,11 @@ export interface StoredMission {
   isBoss?: boolean;
   createdAt: string;
   completedAt: string | null;
+  // Enriched content
+  resources?: MissionResource[];
+  checklist?: string[];
+  tips?: string;
+  completionCriteria?: string;
 }
 
 const INITIAL_MISSIONS: StoredMission[] = [

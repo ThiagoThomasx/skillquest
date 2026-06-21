@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BookOpen, Target, Award, User } from "lucide-react";
+import { LayoutDashboard, Compass, Target, Award, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/paths", label: "Trilhas", icon: BookOpen },
+  { href: "/explore", label: "Explorar", icon: Compass },
   { href: "/missions", label: "Missões", icon: Target },
   { href: "/badges", label: "Conquistas", icon: Award },
   { href: "/profile", label: "Perfil", icon: User },

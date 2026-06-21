@@ -13,12 +13,14 @@ import {
   Zap,
   Flame,
   Star,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/explore", label: "Explorar", icon: Compass },
   { href: "/paths", label: "Trilhas", icon: BookOpen },
   { href: "/missions", label: "Missões", icon: Target },
   { href: "/badges", label: "Conquistas", icon: Award },
