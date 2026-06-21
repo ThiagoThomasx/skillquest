@@ -71,3 +71,36 @@ export function getNextModule(questline: Questline, allMissions: StoredMission[]
 export function countQuestlineMissions(questline: Questline): number {
   return questline.modules.reduce((sum, m) => sum + m.missionIds.length, 0);
 }
+
+export function countCompletedMissions(questline: Questline, allMissions: StoredMission[]): number {
+  return questline.modules.reduce(
+    (sum, mod) => sum + getModuleMissions(mod, allMissions).filter((m) => m.status === "completed").length,
+    0
+  );
+}
+
+export function calculateRemainingMinutes(questline: Questline, allMissions: StoredMission[]): number {
+  return questline.modules.reduce(
+    (sum, mod) =>
+      sum + getModuleMissions(mod, allMissions)
+        .filter((m) => m.status !== "completed")
+        .reduce((s, m) => s + m.estimatedMinutes, 0),
+    0
+  );
+}
+
+export function getNextMission(questline: Questline, allMissions: StoredMission[]): StoredMission | null {
+  const nextMod = getNextModule(questline, allMissions);
+  if (!nextMod) return null;
+  const modMissions = getModuleMissions(nextMod, allMissions);
+  return (
+    modMissions.find((m) => m.status === "active") ??
+    modMissions.find((m) => m.status === "available") ??
+    modMissions.find((m) => m.status !== "completed") ??
+    null
+  );
+}
+
+export function countModulesCompleted(questline: Questline, allMissions: StoredMission[]): number {
+  return questline.modules.filter((mod) => isModuleCompleted(mod, allMissions)).length;
+}

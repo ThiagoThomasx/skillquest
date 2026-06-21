@@ -16,7 +16,7 @@ import {
   CheckCircle2, Clock, ChevronRight, Star, Trophy,
   Sparkles, BarChart3, Skull, Sword, Wand2, Swords,
   BookOpen, PackageOpen, RefreshCw, Play, Timer,
-  CalendarDays,
+  CalendarDays, Layers, Map, Lock, Compass,
 } from "lucide-react";
 import { useProgressStore } from "@/stores/progress-store";
 import { useMissionsStore } from "@/stores/missions-store";
@@ -35,7 +35,12 @@ import {
   calculateQuestlineEarnedXP,
   calculateQuestlineTotalXP,
   countQuestlineMissions,
+  countCompletedMissions,
+  calculateRemainingMinutes,
   getNextModule,
+  getNextMission,
+  countModulesCompleted,
+  calculateModuleProgress,
 } from "@/utils/questline-engine";
 
 const themes = [
@@ -75,7 +80,15 @@ export default function DashboardPage() {
   const qlEarnedXP = activeQuestline ? calculateQuestlineEarnedXP(activeQuestline, missions) : 0;
   const qlTotalXP = activeQuestline ? calculateQuestlineTotalXP(activeQuestline, missions) : 0;
   const qlTotalMissions = activeQuestline ? countQuestlineMissions(activeQuestline) : 0;
+  const qlCompletedMissions = activeQuestline ? countCompletedMissions(activeQuestline, missions) : 0;
+  const qlRemainingMinutes = activeQuestline ? calculateRemainingMinutes(activeQuestline, missions) : 0;
+  const qlRemainingXP = qlTotalXP - qlEarnedXP;
   const nextModule = activeQuestline ? getNextModule(activeQuestline, missions) : null;
+  const nextMission = activeQuestline ? getNextMission(activeQuestline, missions) : null;
+  const qlModulesTotal = activeQuestline?.modules.length ?? 0;
+  const qlModulesCompleted = activeQuestline ? countModulesCompleted(activeQuestline, missions) : 0;
+  const nextModuleProgress = nextModule ? calculateModuleProgress(nextModule, missions) : 0;
+  const modulesUntilBoss = activeQuestline ? qlModulesTotal - qlModulesCompleted : 0;
   const activeBoss = questlines.find((q) => q.bossBattle.status === "available") ?? activeQuestline;
   const earnedBadges = earned.filter((b) => b.earned);
   const recentActivity = events.slice(0, 5);
@@ -540,37 +553,173 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Questline + Conquistas + Estatísticas ─────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* ── Active Questline Panel ────────────────────────────── */}
+      {activeQuestline ? (
+        <Card className="relative overflow-hidden border-sky/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-sky/5 via-transparent to-rose/3 pointer-events-none" />
+          <div className="relative p-5">
 
-        <Card className="p-5 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-sky/5 via-transparent to-transparent pointer-events-none" />
-          <div className="relative">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-sky/10 border border-sky-border flex items-center justify-center">
-                <BookOpen size={14} className="text-sky" />
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky/10 border border-sky/25 flex items-center justify-center shrink-0">
+                  <Map size={16} className="text-sky" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Questline Ativa</p>
+                    <span className="text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 rounded-full px-2 py-0.5">
+                      {activeQuestline.className}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-text leading-tight">{activeQuestline.title}</h3>
+                </div>
               </div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Questline Ativa</p>
+              <div className="flex items-center gap-4 text-xs shrink-0 flex-wrap">
+                <div className="text-center">
+                  <p className="font-bold text-text text-base tabular-nums">{qlCompletedMissions}<span className="text-text-muted font-normal">/{qlTotalMissions}</span></p>
+                  <p className="text-text-dim">missões</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="text-center">
+                  <p className="font-bold text-amber text-base tabular-nums">{qlRemainingXP.toLocaleString()}</p>
+                  <p className="text-text-dim">XP restante</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="text-center">
+                  <p className="font-bold text-text text-base tabular-nums">{Math.ceil(qlRemainingMinutes / 60)}h</p>
+                  <p className="text-text-dim">restantes</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="text-center">
+                  <p className="font-bold text-emerald text-base tabular-nums">{qlProgress}%</p>
+                  <p className="text-text-dim">completo</p>
+                </div>
+              </div>
             </div>
 
-            {activeQuestline ? (
-              <>
-                <h3 className="text-base font-bold text-text mb-0.5">{activeQuestline.title}</h3>
-                <p className="text-xs text-text-muted mb-3">
-                  {qlTotalMissions} missões · {activeQuestline.className}
-                  {nextModule && <span className="ml-2 text-blue font-medium">→ {nextModule.title}</span>}
-                </p>
-                <ProgressBar value={qlProgress} variant="sky" size="sm" className="mb-2" />
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] text-text-muted">{qlEarnedXP}/{qlTotalXP} XP · {qlProgress}%</p>
-                  <Button variant="outline" size="sm">Ver Trilha <ArrowRight size={12} /></Button>
+            {/* Overall progress */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between text-[11px] text-text-muted mb-1.5">
+                <span>{qlModulesCompleted}/{qlModulesTotal} módulos concluídos</span>
+                <span>{qlEarnedXP.toLocaleString()} / {qlTotalXP.toLocaleString()} XP</span>
+              </div>
+              <ProgressBar value={qlProgress} variant="sky" size="md" />
+            </div>
+
+            {/* Three panels: Next Module · Next Mission · Boss Battle */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+              {/* Next Module */}
+              <div className="rounded-xl bg-surface-raised border border-border p-3.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Layers size={12} className="text-blue" />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Próximo Módulo</p>
                 </div>
-              </>
-            ) : (
-              <p className="text-sm text-text-dim">Nenhuma questline ativa.</p>
-            )}
+                {nextModule ? (
+                  <>
+                    <p className="text-sm font-bold text-text mb-0.5">{nextModule.title}</p>
+                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{nextModule.description}</p>
+                    <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                      <span>{nextModule.missionIds.length} missões</span>
+                      <span>{nextModuleProgress}%</span>
+                    </div>
+                    <ProgressBar value={nextModuleProgress} variant="blue" size="xs" />
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 py-2">
+                    <CheckCircle2 size={14} className="text-emerald" />
+                    <p className="text-xs text-emerald font-semibold">Todos módulos completos!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Next Mission */}
+              <div className="rounded-xl bg-surface-raised border border-border p-3.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Target size={12} className="text-amber" />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Próxima Missão</p>
+                </div>
+                {nextMission ? (
+                  <>
+                    <p className="text-sm font-bold text-text mb-0.5 line-clamp-1">{nextMission.title}</p>
+                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{nextMission.description}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-text-muted">
+                      <span className="flex items-center gap-1"><Clock size={10} />~{nextMission.estimatedMinutes}min</span>
+                      <span className="flex items-center gap-1 text-amber font-semibold"><Zap size={10} />{nextMission.xpReward} XP</span>
+                    </div>
+                    {nextMission.status === "locked" && (
+                      <div className="flex items-center gap-1 mt-2 text-[11px] text-text-dim">
+                        <Lock size={10} />
+                        <span>Complete o módulo anterior primeiro</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 py-2">
+                    <Trophy size={14} className="text-amber" />
+                    <p className="text-xs text-amber font-semibold">Pronto para o Boss!</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Boss Battle */}
+              <div className={`rounded-xl border p-3.5 ${
+                activeQuestline.bossBattle.status === "available"
+                  ? "bg-amber/5 border-amber/25"
+                  : activeQuestline.bossBattle.status === "completed"
+                  ? "bg-emerald/5 border-emerald/25"
+                  : "bg-rose/5 border-rose/20"
+              }`}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Skull size={12} className={
+                    activeQuestline.bossBattle.status === "available" ? "text-amber" :
+                    activeQuestline.bossBattle.status === "completed" ? "text-emerald" : "text-rose"
+                  } />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Boss Battle</p>
+                </div>
+                <p className="text-sm font-bold text-text mb-0.5 line-clamp-1">{activeQuestline.bossBattle.title}</p>
+                {activeQuestline.bossBattle.status === "completed" ? (
+                  <p className="text-xs text-emerald font-semibold mt-1">Boss derrotado!</p>
+                ) : activeQuestline.bossBattle.status === "available" ? (
+                  <>
+                    <p className="text-xs text-amber font-semibold mt-1">Disponível agora!</p>
+                    <div className="flex items-center gap-1 mt-2 text-[11px] text-amber font-semibold">
+                      <Zap size={10} />{activeQuestline.bossBattle.xpReward} XP de recompensa
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{activeQuestline.bossBattle.description.slice(0, 80)}…</p>
+                    <div className="flex items-center justify-between text-[11px] text-text-muted">
+                      <span className="flex items-center gap-1"><Layers size={10} />{modulesUntilBoss} módulo{modulesUntilBoss !== 1 ? "s" : ""} restante{modulesUntilBoss !== 1 ? "s" : ""}</span>
+                      <span className="flex items-center gap-1 text-amber font-semibold"><Zap size={10} />{activeQuestline.bossBattle.xpReward} XP</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </Card>
+      ) : (
+        <Card className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-surface-overlay border border-border flex items-center justify-center shrink-0">
+              <Compass size={20} className="text-text-dim" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-text">Nenhuma questline ativa</p>
+              <p className="text-xs text-text-muted mt-0.5">Explore o marketplace e instale uma trilha de aprendizado para começar.</p>
+            </div>
+            <Button variant="primary" size="sm">
+              Explorar <ArrowRight size={13} />
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* ── Conquistas + Estatísticas ──────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
