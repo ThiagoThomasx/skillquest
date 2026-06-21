@@ -8,8 +8,27 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import {
   Target, Clock, Zap, CheckCircle2, Skull, Sword,
   Star, BookOpen, ChevronRight, Flame, ArrowRight, Lock, PackageOpen,
+  ExternalLink, FileText, Video, Code2, FlaskConical, FolderOpen, Lightbulb, Trophy,
 } from "lucide-react";
-import { useMissionsStore, type StoredMission } from "@/stores/missions-store";
+import { useMissionsStore, type StoredMission, type MissionResource } from "@/stores/missions-store";
+
+const RESOURCE_ICONS: Record<MissionResource["type"], React.ReactNode> = {
+  article:       <FileText size={11} />,
+  video:         <Video size={11} />,
+  documentation: <BookOpen size={11} />,
+  practice:      <Code2 size={11} />,
+  lab:           <FlaskConical size={11} />,
+  project:       <FolderOpen size={11} />,
+};
+
+const RESOURCE_LABELS: Record<MissionResource["type"], string> = {
+  article:       "Artigo",
+  video:         "Vídeo",
+  documentation: "Docs",
+  practice:      "Prática",
+  lab:           "Lab",
+  project:       "Projeto",
+};
 
 const DIFFICULTY_CONFIG: Record<string, { variant: "blue" | "amber" | "rose" | "sky"; label: string }> = {
   easy:      { variant: "blue", label: "Fácil" },
@@ -122,28 +141,94 @@ function QuestCard({
             </div>
 
             {expanded && (
-              <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-border mt-2">
-                <div>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Objetivos</p>
-                  <ul className="space-y-1.5">
-                    {m.objectives.map((obj, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-text-muted">
-                        <div className="w-1 h-1 rounded-full bg-blue mt-1.5 shrink-0" />
-                        {obj}
-                      </li>
-                    ))}
-                  </ul>
+              <div className="pt-3 space-y-4 border-t border-border mt-2">
+
+                {/* Objetivos + Recompensas */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Objetivos</p>
+                    <ul className="space-y-1.5">
+                      {m.objectives.map((obj, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-text-muted">
+                          <div className="w-1 h-1 rounded-full bg-blue mt-1.5 shrink-0" />
+                          {obj}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Recompensas</p>
+                    <ul className="space-y-1.5">
+                      {m.rewards.map((reward, i) => (
+                        <li key={i} className="flex items-center gap-2 text-xs text-amber font-medium">
+                          <Star size={10} className="text-amber shrink-0" />{reward}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Recompensas</p>
-                  <ul className="space-y-1.5">
-                    {m.rewards.map((reward, i) => (
-                      <li key={i} className="flex items-center gap-2 text-xs text-amber font-medium">
-                        <Star size={10} className="text-amber shrink-0" />{reward}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+
+                {/* Checklist */}
+                {m.checklist && m.checklist.length > 0 && (
+                  <div className="rounded-xl bg-surface-raised border border-border p-3">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <CheckCircle2 size={12} className="text-emerald" />
+                      <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Checklist</p>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {m.checklist.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-text-muted">
+                          <div className="w-3.5 h-3.5 rounded border border-border bg-surface shrink-0 mt-0.5" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Tip */}
+                {m.tips && (
+                  <div className="flex items-start gap-2 rounded-xl bg-amber/5 border border-amber/15 p-3">
+                    <Lightbulb size={13} className="text-amber shrink-0 mt-0.5" />
+                    <p className="text-xs text-text-muted leading-relaxed"><span className="font-semibold text-amber">Dica: </span>{m.tips}</p>
+                  </div>
+                )}
+
+                {/* Critério de Conclusão */}
+                {m.completionCriteria && (
+                  <div className="flex items-start gap-2 rounded-xl bg-emerald/5 border border-emerald/15 p-3">
+                    <Trophy size={13} className="text-emerald shrink-0 mt-0.5" />
+                    <p className="text-xs text-text-muted leading-relaxed"><span className="font-semibold text-emerald">Conclusão: </span>{m.completionCriteria}</p>
+                  </div>
+                )}
+
+                {/* Recursos de Aprendizado */}
+                {m.resources && m.resources.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Recursos</p>
+                    <div className="space-y-1.5">
+                      {m.resources.map((r, i) => (
+                        <a
+                          key={i}
+                          href={r.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-raised px-3 py-2 hover:border-blue/30 hover:bg-blue/5 transition-colors group"
+                        >
+                          <span className="text-text-muted group-hover:text-blue transition-colors">
+                            {RESOURCE_ICONS[r.type]}
+                          </span>
+                          <span className="flex-1 min-w-0 text-xs text-text truncate">{r.title}</span>
+                          <span className="text-[10px] text-text-dim bg-surface px-1.5 py-0.5 rounded border border-border shrink-0">
+                            {RESOURCE_LABELS[r.type]}
+                          </span>
+                          <span className="text-[10px] text-text-dim shrink-0">~{r.estimatedMinutes}min</span>
+                          <ExternalLink size={10} className="text-text-dim group-hover:text-blue transition-colors shrink-0" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
