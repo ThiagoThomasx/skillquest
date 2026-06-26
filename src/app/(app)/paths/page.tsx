@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +12,7 @@ import {
 import {
   Map, Lock, CheckCircle, Zap, Star, Skull, ChevronRight, Swords,
   Crown, Sparkles, Trophy, ArrowRight, Flame, Plus, Pencil, Trash2,
-  Copy, Archive, Target, BookOpen, Clock, Package, Shield, ChevronDown,
+  Copy, Archive, Target, BookOpen, Clock, Package, Shield, ChevronDown, ExternalLink,
 } from "lucide-react";
 import {
   useQuestlinesStore,
@@ -530,8 +531,8 @@ function ModuleRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [missionDialogOpen, setMissionDialogOpen] = useState(false);
-  const { removeMissionFromModule } = useQuestlinesStore();
-  const { deleteMission } = useMissionsStore();
+  const { removeMissionFromModule, recalculateProgress } = useQuestlinesStore();
+  const { deleteMission, completeMission } = useMissionsStore();
 
   const progress = calculateModuleProgress(mod, allMissions);
   const completed = isModuleCompleted(mod, allMissions);
@@ -582,10 +583,26 @@ function ModuleRow({
           ) : (
             modMissions.map((m) => (
               <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-surface-raised">
-                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                  m.status === "completed" ? "bg-emerald" : m.status === "active" ? "bg-blue" : "bg-text-dim"
-                }`} />
-                <p className="flex-1 text-xs text-text truncate">{m.title}</p>
+                <button
+                  onClick={() => {
+                    if (m.status !== "completed" && m.status !== "locked") {
+                      completeMission(m.id);
+                      recalculateProgress(questlineId);
+                    }
+                  }}
+                  disabled={m.status === "completed" || m.status === "locked"}
+                  className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                    m.status === "completed"
+                      ? "bg-emerald border-emerald text-white cursor-default"
+                      : "border-border hover:border-blue hover:bg-blue/10 cursor-pointer"
+                  }`}
+                  title={m.status === "completed" ? "Concluída" : "Marcar como concluída"}
+                >
+                  {m.status === "completed" && <CheckCircle size={10} />}
+                </button>
+                <p className={`flex-1 text-xs truncate ${m.status === "completed" ? "text-text-muted line-through" : "text-text"}`}>
+                  {m.title}
+                </p>
                 <span className="text-[10px] text-amber font-medium">{m.xpReward} XP</span>
                 <button
                   onClick={() => {
@@ -636,6 +653,7 @@ function QuestlineCard({
   onArchive: () => void;
   onDuplicate: () => void;
 }) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<QuestlineModule | null>(null);
@@ -780,6 +798,9 @@ function QuestlineCard({
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 pt-1 border-t border-border flex-wrap">
+          <Button variant="primary" size="sm" onClick={() => router.push(`/paths/${q.id}`)}>
+            <ExternalLink size={12} />Ver Roadmap
+          </Button>
           <Button variant="ghost" size="sm" onClick={onEdit}><Pencil size={12} />Editar</Button>
           <Button variant="ghost" size="sm" onClick={onDuplicate}><Copy size={12} />Duplicar</Button>
           {!isArchived && (
@@ -1088,7 +1109,7 @@ export default function PathsPage() {
             <Sparkles size={16} className="text-amber shrink-0" />
             <div>
               <p className="text-sm font-semibold text-text">Templates prontos para usar</p>
-              <p className="text-xs text-text-muted">Clique em "Usar Template" para adicionar à sua lista de trilhas com todos os módulos e missões pré-configurados.</p>
+              <p className="text-xs text-text-muted">Clique em &quot;Usar Template&quot; para adicionar à sua lista de trilhas com todos os módulos e missões pré-configurados.</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

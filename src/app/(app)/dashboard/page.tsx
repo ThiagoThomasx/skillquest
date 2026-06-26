@@ -11,6 +11,7 @@ import {
   CareerClassCard,
   ThemeOptionCard,
   BadgeCard,
+  StudyMetricsPanel,
 } from "@/features/dashboard";
 import Link from "next/link";
 import {
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { useProgressStore } from "@/stores/progress-store";
 import { useMissionsStore } from "@/stores/missions-store";
+import { useReviewStore } from "@/stores/review-store";
 import { useBadgesStore } from "@/stores/badges-store";
 import { useStreakStore } from "@/stores/streak-store";
 import { useActivityStore } from "@/stores/activity-store";
@@ -35,6 +37,8 @@ import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { getCareerStage } from "@/engines/career-engine";
 import { formatXP, formatRelativeTime } from "@/utils/format";
 import { DIFFICULTY_LABEL } from "@/constants";
+import { buildHeatmapData } from "@/utils/session-metrics";
+import { ConsistencyCalendar } from "@/components/ConsistencyCalendar";
 import {
   calculateQuestlineProgress,
   calculateQuestlineEarnedXP,
@@ -68,6 +72,7 @@ export default function DashboardPage() {
   const { sessions, openSession } = useStudySessionStore();
   const { missionsGoal, minutesGoal, xpGoal } = useWeeklyGoalStore();
   const { projects: portfolioProjects, addProject: addPortfolioProject } = usePortfolioStore();
+  const { getOverdue, getToday } = useReviewStore();
 
   const {
     dailyQuestId, completedToday, skippedToday, focusMinutes, dailyGoal,
@@ -175,11 +180,368 @@ export default function DashboardPage() {
     skipDailyQuest(missions, questlines);
   }
 
+  const reviewsOverdue = getOverdue();
+  const reviewsToday = getToday();
+  const reviewsDue = [...reviewsOverdue, ...reviewsToday];
+
+  const heatmapData = useMemo(() => buildHeatmapData(sessions, 91), [sessions]);
+
   return (
     <div className="space-y-5 max-w-[1600px]">
 
       {/* ── Agora ──────────────────────────────────────────────── */}
       <NowCard />
+
+      {/* ── Revisões pendentes ─────────────────────────────────── */}
+      {reviewsDue.length > 0 && (
+        <Card className="border-amber/30 bg-amber/5 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RefreshCw size={15} className="text-amber" />
+              <p className="text-sm font-bold text-text">
+                Revisões de hoje
+                <span className="ml-2 text-xs font-normal text-amber">
+                  {reviewsDue.length} pendente{reviewsDue.length !== 1 ? "s" : ""}
+                </span>
+              </p>
+            </div>
+            <Link
+              href="/review"
+              className="text-xs font-semibold text-amber hover:text-amber/80 flex items-center gap-1 transition-colors"
+            >
+              Ver todas <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="mt-3 flex flex-col gap-1.5">
+            {reviewsDue.slice(0, 3).map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-2 text-xs text-text-muted"
+              >
+                <BookOpen size={11} className="text-amber shrink-0" />
+                <span className="truncate">{item.missionTitle}</span>
+                {item.interval && (
+                  <span className="ml-auto shrink-0 text-[10px] opacity-60">
+                    {item.interval === 1 ? "1d" : item.interval === 7 ? "7d" : item.interval === 30 ? "30d" : "90d"}
+                  </span>
+                )}
+              </div>
+            ))}
+            {reviewsDue.length > 3 && (
+              <p className="text-[10px] text-text-muted opacity-60 pl-[19px]">
+                + {reviewsDue.length - 3} mais…
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Quest Diária + Meta Semanal (ação principal) ─────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        {/* Daily Quest Card */}
+        <div className="xl:col-span-2">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-text flex items-center gap-2">
+              <Flame size={14} className="text-amber" /> Quest Diária
+            </h2>
+          </div>
+
+          {dailyMission ? (
+            <Card className={`p-5 relative overflow-hidden ${
+              completedToday ? "border-emerald/30 bg-emerald/[0.02]" : "border-amber/20 bg-amber/[0.02]"
+            }`}>
+              {completedToday && (
+                <div className="absolute top-3 right-3">
+                  <span className="text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20 rounded-full px-2 py-0.5">
+                    Concluída hoje!
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-start gap-4">
+                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
+                  completedToday ? "bg-emerald/10 border-emerald/30" : "bg-amber/10 border-amber/30"
+                }`}>
+                  {completedToday
+                    ? <CheckCircle2 size={22} className="text-emerald" />
+                    : <Flame size={22} className="text-amber" />
+                  }
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className="text-base font-bold text-text">{dailyMission.title}</p>
+                    {dailyMission.isDaily && (
+                      <span className="text-[10px] font-bold bg-amber/10 text-amber border border-amber/20 rounded-full px-2 py-0.5">
+                        Bônus 2×
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-text-muted mb-3">{dailyMission.description}</p>
+
+                  <div className="flex items-center gap-4 flex-wrap text-xs text-text-dim">
+                    <span className="flex items-center gap-1 text-blue font-medium">
+                      <BookOpen size={10} />
+                      {dailyMission.pathTitle}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock size={10} /> ~{dailyMission.estimatedMinutes} min
+                    </span>
+                    <span className="flex items-center gap-1 text-amber font-semibold">
+                      <Zap size={10} />
+                      {dailyMission.isDaily ? dailyMission.xpReward * 2 : dailyMission.xpReward} XP
+                    </span>
+                    <span className="capitalize">{DIFFICULTY_LABEL[dailyMission.difficulty] ?? dailyMission.difficulty}</span>
+                  </div>
+
+                  {focusMinutes > 0 && (
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                        <span>{focusMinutes} / {dailyGoal} min estudados hoje</span>
+                        <span>{Math.min(Math.round((focusMinutes / dailyGoal) * 100), 100)}%</span>
+                      </div>
+                      <ProgressBar value={focusMinutes} max={dailyGoal} variant="amber" size="sm" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {!completedToday && (
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+                  <Button
+                    variant="amber"
+                    size="sm"
+                    onClick={handleStartSession}
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Play size={13} className="mr-1.5" /> Iniciar Sessão
+                  </Button>
+                  {!skippedToday && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSkipQuest}
+                      title="Trocar quest (1× por dia)"
+                    >
+                      <RefreshCw size={13} className="mr-1.5" /> Trocar Quest
+                    </Button>
+                  )}
+                </div>
+              )}
+            </Card>
+          ) : (
+            <Card className="p-6 flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-amber/10 border border-amber/20 flex items-center justify-center shrink-0">
+                <Flame size={20} className="text-amber/50" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-text">Sem quest para hoje</p>
+                <p className="text-xs text-text-muted mt-0.5">Comece uma trilha de aprendizado para receber quests diárias.</p>
+              </div>
+              <Link href="/explore">
+                <Button size="sm" variant="primary">Explorar trilhas</Button>
+              </Link>
+            </Card>
+          )}
+        </div>
+
+        {/* Meta Semanal */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CalendarDays size={14} className="text-blue" />
+              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Meta Semanal</p>
+            </div>
+            <span className="text-[11px] text-text-dim">{daysRemainingInWeek}d restantes</span>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-text-muted flex items-center gap-1"><Target size={10} /> Missões</span>
+                <span className="font-semibold text-text">{weeklyMissionsCompleted}/{missionsGoal}</span>
+              </div>
+              <ProgressBar value={weeklyMissionsCompleted} max={missionsGoal} variant="blue" size="sm" />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-text-muted flex items-center gap-1"><Clock size={10} /> Minutos</span>
+                <span className="font-semibold text-text">{weeklyMinutes}/{minutesGoal}</span>
+              </div>
+              <ProgressBar value={weeklyMinutes} max={minutesGoal} variant="emerald" size="sm" />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-text-muted flex items-center gap-1"><Zap size={10} /> XP</span>
+                <span className="font-semibold text-amber">{weeklyTotalXP}/{xpGoal}</span>
+              </div>
+              <ProgressBar value={weeklyTotalXP} max={xpGoal} variant="amber" size="sm" />
+            </div>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-[11px] text-text-dim">
+              {weeklyMissionsCompleted >= missionsGoal && weeklyMinutes >= minutesGoal
+                ? "🎯 Meta semanal atingida!"
+                : `${missionsGoal - weeklyMissionsCompleted > 0 ? `${missionsGoal - weeklyMissionsCompleted} missões` : "Missões ✓"} · ${minutesGoal - weeklyMinutes > 0 ? `${minutesGoal - weeklyMinutes} min` : "Tempo ✓"}`}
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      {/* ── Active Questline Panel (contexto da jornada) ──────── */}
+      {activeQuestline ? (
+        <Card className="relative overflow-hidden border-sky/20">
+          <div className="absolute inset-0 bg-gradient-to-br from-sky/5 via-transparent to-rose/3 pointer-events-none" />
+          <div className="relative p-5">
+
+            <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-sky/10 border border-sky/25 flex items-center justify-center shrink-0">
+                  <Map size={16} className="text-sky" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Questline Ativa</p>
+                    <span className="text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 rounded-full px-2 py-0.5">
+                      {activeQuestline.className}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-text leading-tight">{activeQuestline.title}</h3>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-xs shrink-0 flex-wrap">
+                <div className="text-center">
+                  <p className="font-bold text-text text-base tabular-nums">{qlCompletedMissions}<span className="text-text-muted font-normal">/{qlTotalMissions}</span></p>
+                  <p className="text-text-dim">missões</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div className="text-center">
+                  <p className="font-bold text-emerald text-base tabular-nums">{qlProgress}%</p>
+                  <p className="text-text-dim">completo</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-[11px] text-text-muted mb-1.5">
+                <span>{qlModulesCompleted}/{qlModulesTotal} módulos</span>
+                <span>{qlEarnedXP.toLocaleString()} / {qlTotalXP.toLocaleString()} XP</span>
+              </div>
+              <ProgressBar value={qlProgress} variant="sky" size="md" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+              <div className="rounded-xl bg-surface-raised border border-border p-3.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Layers size={12} className="text-blue" />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Próximo Módulo</p>
+                </div>
+                {nextModule ? (
+                  <>
+                    <p className="text-sm font-bold text-text mb-0.5">{nextModule.title}</p>
+                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{nextModule.description}</p>
+                    <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
+                      <span>{nextModule.missionIds.length} missões</span>
+                      <span>{nextModuleProgress}%</span>
+                    </div>
+                    <ProgressBar value={nextModuleProgress} variant="blue" size="xs" />
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 py-2">
+                    <CheckCircle2 size={14} className="text-emerald" />
+                    <p className="text-xs text-emerald font-semibold">Todos módulos completos!</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl bg-surface-raised border border-border p-3.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Target size={12} className="text-amber" />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Próxima Missão</p>
+                </div>
+                {nextMission ? (
+                  <>
+                    <p className="text-sm font-bold text-text mb-0.5 line-clamp-1">{nextMission.title}</p>
+                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{nextMission.description}</p>
+                    <div className="flex items-center gap-3 text-[11px] text-text-muted">
+                      <span className="flex items-center gap-1"><Clock size={10} />~{nextMission.estimatedMinutes}min</span>
+                      <span className="flex items-center gap-1 text-amber font-semibold"><Zap size={10} />{nextMission.xpReward} XP</span>
+                    </div>
+                    {nextMission.status === "locked" && (
+                      <div className="flex items-center gap-1 mt-2 text-[11px] text-text-dim">
+                        <Lock size={10} />
+                        <span>Complete o módulo anterior primeiro</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 py-2">
+                    <Trophy size={14} className="text-amber" />
+                    <p className="text-xs text-amber font-semibold">Pronto para o Boss!</p>
+                  </div>
+                )}
+              </div>
+
+              <div className={`rounded-xl border p-3.5 ${
+                activeQuestline.bossBattle.status === "available"
+                  ? "bg-amber/5 border-amber/25"
+                  : activeQuestline.bossBattle.status === "completed"
+                  ? "bg-emerald/5 border-emerald/25"
+                  : "bg-rose/5 border-rose/20"
+              }`}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Skull size={12} className={
+                    activeQuestline.bossBattle.status === "available" ? "text-amber" :
+                    activeQuestline.bossBattle.status === "completed" ? "text-emerald" : "text-rose"
+                  } />
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Boss Battle</p>
+                </div>
+                <p className="text-sm font-bold text-text mb-0.5 line-clamp-1">{activeQuestline.bossBattle.title}</p>
+                {activeQuestline.bossBattle.status === "completed" ? (
+                  <p className="text-xs text-emerald font-semibold mt-1">Boss derrotado!</p>
+                ) : activeQuestline.bossBattle.status === "available" ? (
+                  <>
+                    <p className="text-xs text-amber font-semibold mt-1">Disponível agora!</p>
+                    <div className="flex items-center gap-1 mt-2 text-[11px] text-amber font-semibold">
+                      <Zap size={10} />{activeQuestline.bossBattle.xpReward} XP de recompensa
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{activeQuestline.bossBattle.description.slice(0, 80)}…</p>
+                    <div className="flex items-center justify-between text-[11px] text-text-muted">
+                      <span className="flex items-center gap-1"><Layers size={10} />{modulesUntilBoss} módulo{modulesUntilBoss !== 1 ? "s" : ""} restante{modulesUntilBoss !== 1 ? "s" : ""}</span>
+                      <span className="flex items-center gap-1 text-amber font-semibold"><Zap size={10} />{activeQuestline.bossBattle.xpReward} XP</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-surface-overlay border border-border flex items-center justify-center shrink-0">
+              <Compass size={20} className="text-text-dim" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-text">Nenhuma trilha ativa</p>
+              <p className="text-xs text-text-muted mt-0.5">Explore o marketplace e escolha uma trilha de aprendizado para começar sua jornada.</p>
+            </div>
+            <Link href="/explore">
+              <Button variant="primary" size="sm">
+                Explorar <ArrowRight size={13} />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {/* ── Hero Principal ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -309,160 +671,16 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ── Daily Quest ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      {/* ── Métricas de Estudo ────────────────────────────────── */}
+      <StudyMetricsPanel
+        sessions={sessions}
+        activeQuestlineTitle={activeQuestline?.title}
+        activeQuestlineEstimatedHours={activeQuestline?.estimatedHours}
+        activeQuestlineProgress={qlProgress}
+      />
 
-        {/* Daily Quest Card */}
-        <div className="xl:col-span-2">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-text flex items-center gap-2">
-              <Flame size={14} className="text-amber" /> Quest Diária
-            </h2>
-          </div>
-
-          {dailyMission ? (
-            <Card className={`p-5 relative overflow-hidden ${
-              completedToday ? "border-emerald/30 bg-emerald/[0.02]" : "border-amber/20 bg-amber/[0.02]"
-            }`}>
-              {completedToday && (
-                <div className="absolute top-3 right-3">
-                  <span className="text-[10px] font-bold bg-emerald/10 text-emerald border border-emerald/20 rounded-full px-2 py-0.5">
-                    Concluída hoje!
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-xl border flex items-center justify-center shrink-0 ${
-                  completedToday ? "bg-emerald/10 border-emerald/30" : "bg-amber/10 border-amber/30"
-                }`}>
-                  {completedToday
-                    ? <CheckCircle2 size={22} className="text-emerald" />
-                    : <Flame size={22} className="text-amber" />
-                  }
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <p className="text-base font-bold text-text">{dailyMission.title}</p>
-                    {dailyMission.isDaily && (
-                      <span className="text-[10px] font-bold bg-amber/10 text-amber border border-amber/20 rounded-full px-2 py-0.5">
-                        Bônus 2×
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-text-muted mb-3">{dailyMission.description}</p>
-
-                  {/* Reason + meta */}
-                  <div className="flex items-center gap-4 flex-wrap text-xs text-text-dim">
-                    <span className="flex items-center gap-1 text-blue font-medium">
-                      <BookOpen size={10} />
-                      {/* reason from store would need separate state; show path title */}
-                      {dailyMission.pathTitle}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock size={10} /> ~{dailyMission.estimatedMinutes} min
-                    </span>
-                    <span className="flex items-center gap-1 text-amber font-semibold">
-                      <Zap size={10} />
-                      {dailyMission.isDaily ? dailyMission.xpReward * 2 : dailyMission.xpReward} XP
-                    </span>
-                    <span className="capitalize">{DIFFICULTY_LABEL[dailyMission.difficulty] ?? dailyMission.difficulty}</span>
-                  </div>
-
-                  {/* Focus progress today */}
-                  {focusMinutes > 0 && (
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
-                        <span>{focusMinutes} / {dailyGoal} min estudados hoje</span>
-                        <span>{Math.min(Math.round((focusMinutes / dailyGoal) * 100), 100)}%</span>
-                      </div>
-                      <ProgressBar value={focusMinutes} max={dailyGoal} variant="amber" size="sm" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {!completedToday && (
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-                  <Button
-                    variant="amber"
-                    size="sm"
-                    onClick={handleStartSession}
-                    className="flex-1 sm:flex-none"
-                  >
-                    <Play size={13} className="mr-1.5" /> Iniciar Sessão
-                  </Button>
-                  {!skippedToday && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSkipQuest}
-                      title="Trocar quest (1× por dia)"
-                    >
-                      <RefreshCw size={13} className="mr-1.5" /> Trocar Quest
-                    </Button>
-                  )}
-                </div>
-              )}
-            </Card>
-          ) : (
-            <Card className="p-8 text-center">
-              <Flame size={28} className="text-text-dim mx-auto mb-3" />
-              <p className="text-sm font-semibold text-text">Nenhuma quest disponível</p>
-              <p className="text-xs text-text-muted mt-1">Complete as missões existentes para desbloquear mais.</p>
-            </Card>
-          )}
-        </div>
-
-        {/* Meta Semanal */}
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CalendarDays size={14} className="text-blue" />
-              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Meta Semanal</p>
-            </div>
-            <span className="text-[11px] text-text-dim">{daysRemainingInWeek}d restantes</span>
-          </div>
-
-          <div className="space-y-4">
-            {/* Missions */}
-            <div>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-text-muted flex items-center gap-1"><Target size={10} /> Missões</span>
-                <span className="font-semibold text-text">{weeklyMissionsCompleted}/{missionsGoal}</span>
-              </div>
-              <ProgressBar value={weeklyMissionsCompleted} max={missionsGoal} variant="blue" size="sm" />
-            </div>
-
-            {/* Minutes */}
-            <div>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-text-muted flex items-center gap-1"><Clock size={10} /> Minutos</span>
-                <span className="font-semibold text-text">{weeklyMinutes}/{minutesGoal}</span>
-              </div>
-              <ProgressBar value={weeklyMinutes} max={minutesGoal} variant="emerald" size="sm" />
-            </div>
-
-            {/* XP */}
-            <div>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-text-muted flex items-center gap-1"><Zap size={10} /> XP</span>
-                <span className="font-semibold text-amber">{weeklyTotalXP}/{xpGoal}</span>
-              </div>
-              <ProgressBar value={weeklyTotalXP} max={xpGoal} variant="amber" size="sm" />
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-[11px] text-text-dim">
-              {weeklyMissionsCompleted >= missionsGoal && weeklyMinutes >= minutesGoal
-                ? "Meta semanal atingida!"
-                : `${missionsGoal - weeklyMissionsCompleted > 0 ? `${missionsGoal - weeklyMissionsCompleted} missões restantes` : "Missões ok"} · ${minutesGoal - weeklyMinutes > 0 ? `${minutesGoal - weeklyMinutes} min restantes` : "Tempo ok"}`}
-            </p>
-          </div>
-        </Card>
-      </div>
+      {/* ── Consistência ─────────────────────────────────────── */}
+      <ConsistencyCalendar data={heatmapData} />
 
       {/* ── Missões em Andamento + Atividade Recente ──────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
@@ -476,10 +694,17 @@ export default function DashboardPage() {
           </div>
 
           {activeMissions.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Target size={28} className="text-text-dim mx-auto mb-3" />
-              <p className="text-sm font-semibold text-text">Nenhuma quest ativa</p>
-              <p className="text-xs text-text-muted mt-1">Vá para Missões e inicie uma quest!</p>
+            <Card className="p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue/10 border border-blue/20 flex items-center justify-center shrink-0">
+                <Target size={18} className="text-blue/50" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-text">Sem quests em andamento</p>
+                <p className="text-xs text-text-muted mt-0.5">Acesse Missões para escolher e iniciar uma quest.</p>
+              </div>
+              <Link href="/missions">
+                <Button size="sm" variant="ghost">Ver missões</Button>
+              </Link>
             </Card>
           ) : (
             activeMissions.map((m) => (
@@ -543,10 +768,10 @@ export default function DashboardPage() {
           </div>
 
           {recentActivity.length === 0 ? (
-            <Card className="p-8 text-center">
-              <PackageOpen size={28} className="text-text-dim mx-auto mb-3" />
-              <p className="text-sm font-semibold text-text">Sem atividade ainda</p>
-              <p className="text-xs text-text-muted mt-1">Complete missões para ver o histórico.</p>
+            <Card className="p-5 text-center">
+              <PackageOpen size={22} className="text-text-dim mx-auto mb-2" />
+              <p className="text-sm font-semibold text-text">Nenhuma atividade ainda</p>
+              <p className="text-xs text-text-muted mt-0.5">Conclua sua primeira quest para ver o histórico aqui.</p>
             </Card>
           ) : (
             <Card className="divide-y divide-border">
@@ -569,173 +794,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
-      {/* ── Active Questline Panel ────────────────────────────── */}
-      {activeQuestline ? (
-        <Card className="relative overflow-hidden border-sky/20">
-          <div className="absolute inset-0 bg-gradient-to-br from-sky/5 via-transparent to-rose/3 pointer-events-none" />
-          <div className="relative p-5">
-
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky/10 border border-sky/25 flex items-center justify-center shrink-0">
-                  <Map size={16} className="text-sky" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Questline Ativa</p>
-                    <span className="text-[10px] font-bold bg-sky/10 text-sky border border-sky/20 rounded-full px-2 py-0.5">
-                      {activeQuestline.className}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-text leading-tight">{activeQuestline.title}</h3>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-xs shrink-0 flex-wrap">
-                <div className="text-center">
-                  <p className="font-bold text-text text-base tabular-nums">{qlCompletedMissions}<span className="text-text-muted font-normal">/{qlTotalMissions}</span></p>
-                  <p className="text-text-dim">missões</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="font-bold text-amber text-base tabular-nums">{qlRemainingXP.toLocaleString()}</p>
-                  <p className="text-text-dim">XP restante</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="font-bold text-text text-base tabular-nums">{Math.ceil(qlRemainingMinutes / 60)}h</p>
-                  <p className="text-text-dim">restantes</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div className="text-center">
-                  <p className="font-bold text-emerald text-base tabular-nums">{qlProgress}%</p>
-                  <p className="text-text-dim">completo</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Overall progress */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between text-[11px] text-text-muted mb-1.5">
-                <span>{qlModulesCompleted}/{qlModulesTotal} módulos concluídos</span>
-                <span>{qlEarnedXP.toLocaleString()} / {qlTotalXP.toLocaleString()} XP</span>
-              </div>
-              <ProgressBar value={qlProgress} variant="sky" size="md" />
-            </div>
-
-            {/* Three panels: Next Module · Next Mission · Boss Battle */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-
-              {/* Next Module */}
-              <div className="rounded-xl bg-surface-raised border border-border p-3.5">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Layers size={12} className="text-blue" />
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Próximo Módulo</p>
-                </div>
-                {nextModule ? (
-                  <>
-                    <p className="text-sm font-bold text-text mb-0.5">{nextModule.title}</p>
-                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{nextModule.description}</p>
-                    <div className="flex items-center justify-between text-[11px] text-text-muted mb-1">
-                      <span>{nextModule.missionIds.length} missões</span>
-                      <span>{nextModuleProgress}%</span>
-                    </div>
-                    <ProgressBar value={nextModuleProgress} variant="blue" size="xs" />
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 py-2">
-                    <CheckCircle2 size={14} className="text-emerald" />
-                    <p className="text-xs text-emerald font-semibold">Todos módulos completos!</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Next Mission */}
-              <div className="rounded-xl bg-surface-raised border border-border p-3.5">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Target size={12} className="text-amber" />
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Próxima Missão</p>
-                </div>
-                {nextMission ? (
-                  <>
-                    <p className="text-sm font-bold text-text mb-0.5 line-clamp-1">{nextMission.title}</p>
-                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{nextMission.description}</p>
-                    <div className="flex items-center gap-3 text-[11px] text-text-muted">
-                      <span className="flex items-center gap-1"><Clock size={10} />~{nextMission.estimatedMinutes}min</span>
-                      <span className="flex items-center gap-1 text-amber font-semibold"><Zap size={10} />{nextMission.xpReward} XP</span>
-                    </div>
-                    {nextMission.status === "locked" && (
-                      <div className="flex items-center gap-1 mt-2 text-[11px] text-text-dim">
-                        <Lock size={10} />
-                        <span>Complete o módulo anterior primeiro</span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 py-2">
-                    <Trophy size={14} className="text-amber" />
-                    <p className="text-xs text-amber font-semibold">Pronto para o Boss!</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Boss Battle */}
-              <div className={`rounded-xl border p-3.5 ${
-                activeQuestline.bossBattle.status === "available"
-                  ? "bg-amber/5 border-amber/25"
-                  : activeQuestline.bossBattle.status === "completed"
-                  ? "bg-emerald/5 border-emerald/25"
-                  : "bg-rose/5 border-rose/20"
-              }`}>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Skull size={12} className={
-                    activeQuestline.bossBattle.status === "available" ? "text-amber" :
-                    activeQuestline.bossBattle.status === "completed" ? "text-emerald" : "text-rose"
-                  } />
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">Boss Battle</p>
-                </div>
-                <p className="text-sm font-bold text-text mb-0.5 line-clamp-1">{activeQuestline.bossBattle.title}</p>
-                {activeQuestline.bossBattle.status === "completed" ? (
-                  <p className="text-xs text-emerald font-semibold mt-1">Boss derrotado!</p>
-                ) : activeQuestline.bossBattle.status === "available" ? (
-                  <>
-                    <p className="text-xs text-amber font-semibold mt-1">Disponível agora!</p>
-                    <div className="flex items-center gap-1 mt-2 text-[11px] text-amber font-semibold">
-                      <Zap size={10} />{activeQuestline.bossBattle.xpReward} XP de recompensa
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-xs text-text-muted mb-2 line-clamp-2">{activeQuestline.bossBattle.description.slice(0, 80)}…</p>
-                    <div className="flex items-center justify-between text-[11px] text-text-muted">
-                      <span className="flex items-center gap-1"><Layers size={10} />{modulesUntilBoss} módulo{modulesUntilBoss !== 1 ? "s" : ""} restante{modulesUntilBoss !== 1 ? "s" : ""}</span>
-                      <span className="flex items-center gap-1 text-amber font-semibold"><Zap size={10} />{activeQuestline.bossBattle.xpReward} XP</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-surface-overlay border border-border flex items-center justify-center shrink-0">
-              <Compass size={20} className="text-text-dim" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-text">Nenhuma questline ativa</p>
-              <p className="text-xs text-text-muted mt-0.5">Explore o marketplace e instale uma trilha de aprendizado para começar.</p>
-            </div>
-            <Link href="/explore">
-              <Button variant="primary" size="sm">
-                Explorar <ArrowRight size={13} />
-              </Button>
-            </Link>
-          </div>
-        </Card>
-      )}
 
       {/* ── Conquistas + Estatísticas ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

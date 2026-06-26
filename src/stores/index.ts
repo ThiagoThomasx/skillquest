@@ -9,3 +9,8 @@ export { useDailyQuestStore } from "./daily-quest-store";
 export { useStudySessionStore } from "./study-session-store";
 export { useWeeklyGoalStore } from "./weekly-goal-store";
 export { usePortfolioStore } from "./portfolio-store";
+export { useNotesStore } from "./notes-store";
+export { useReviewStore } from "./review-store";
+export { useResourcesStore } from "./resources-store";
+export { useProjectsStore } from "./projects-store";
+export type { StudyProject, ProjectStatus, ProjectDifficulty, ProjectTask, ProjectFormData } from "./projects-store";

@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { LevelUpModal } from "@/components/LevelUpModal";
 import { StoreSync } from "@/components/StoreSync";
 import { StudySessionModal } from "@/components/StudySessionModal";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Topbar />
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-5 pb-20 lg:pb-5">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-5 pb-24 lg:pb-5">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
@@ -24,6 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <BottomNav />
       <LevelUpModal />
       <StudySessionModal />
+      <GlobalSearch />
       <StoreSync />
     </div>
   );

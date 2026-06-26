@@ -10,6 +10,29 @@ import { useDailyQuestStore } from "./daily-quest-store";
 import { useStudySessionStore } from "./study-session-store";
 import { useWeeklyGoalStore } from "./weekly-goal-store";
 import { usePortfolioStore } from "./portfolio-store";
+import { useNotesStore } from "./notes-store";
+import { useReviewStore } from "./review-store";
+import { useResourcesStore } from "./resources-store";
+import { useProjectsStore } from "./projects-store";
+
+export const BACKUP_VERSION = "4.0";
+
+export interface BackupSummary {
+  version: string;
+  exportedAt: string;
+  counts: {
+    missions: number;
+    questlines: number;
+    sessions: number;
+    notes: number;
+    reviews: number;
+    resources: number;
+    projects: number;
+    portfolioProjects: number;
+    badges: number;
+    activityEvents: number;
+  };
+}
 
 interface SkillQuestBackup {
   version: string;
@@ -24,12 +47,16 @@ interface SkillQuestBackup {
   studySessions: { sessions: ReturnType<typeof useStudySessionStore.getState>["sessions"] };
   weeklyGoals: ReturnType<typeof useWeeklyGoalStore.getState>;
   portfolio: { projects: ReturnType<typeof usePortfolioStore.getState>["projects"] };
+  notes: { notes: ReturnType<typeof useNotesStore.getState>["notes"] };
+  reviews: { reviews: ReturnType<typeof useReviewStore.getState>["reviews"] };
+  resources: { resources: ReturnType<typeof useResourcesStore.getState>["resources"] };
+  studyProjects: { projects: ReturnType<typeof useProjectsStore.getState>["projects"] };
   ui: { theme: string };
 }
 
 export function exportBackup(): void {
   const backup: SkillQuestBackup = {
-    version: "3.0",
+    version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     progress: useProgressStore.getState(),
     missions: useMissionsStore.getState(),
@@ -41,6 +68,10 @@ export function exportBackup(): void {
     studySessions: { sessions: useStudySessionStore.getState().sessions },
     weeklyGoals: useWeeklyGoalStore.getState(),
     portfolio: { projects: usePortfolioStore.getState().projects },
+    notes: { notes: useNotesStore.getState().notes },
+    reviews: { reviews: useReviewStore.getState().reviews },
+    resources: { resources: useResourcesStore.getState().resources },
+    studyProjects: { projects: useProjectsStore.getState().projects },
     ui: { theme: useUIStore.getState().theme },
   };
 
@@ -86,6 +117,42 @@ const BackupHeaderSchema = z.object({
   }),
 });
 
+export function parseBackupSummary(file: File): Promise<BackupSummary> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const raw = JSON.parse(e.target?.result as string);
+        const result = BackupHeaderSchema.safeParse(raw);
+        if (!result.success) {
+          throw new Error("Arquivo de backup inválido ou de versão incompatível.");
+        }
+        const b = raw as SkillQuestBackup;
+        resolve({
+          version: b.version,
+          exportedAt: b.exportedAt,
+          counts: {
+            missions: b.missions?.missions?.length ?? 0,
+            questlines: b.questlines?.questlines?.length ?? 0,
+            sessions: b.studySessions?.sessions?.length ?? 0,
+            notes: b.notes?.notes?.length ?? 0,
+            reviews: b.reviews?.reviews?.length ?? 0,
+            resources: b.resources?.resources?.length ?? 0,
+            projects: b.studyProjects?.projects?.length ?? 0,
+            portfolioProjects: b.portfolio?.projects?.length ?? 0,
+            badges: b.badges?.earned?.length ?? 0,
+            activityEvents: b.activity?.events?.length ?? 0,
+          },
+        });
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = () => reject(new Error("Erro ao ler o arquivo."));
+    reader.readAsText(file);
+  });
+}
+
 export function importBackup(file: File): Promise<void> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -125,7 +192,6 @@ export function importBackup(file: File): Promise<void> {
         });
         useActivityStore.setState({ events: backup.activity.events });
 
-        // v3.0+ fields
         if (backup.dailyQuest) {
           useDailyQuestStore.setState({
             dailyQuestId: backup.dailyQuest.dailyQuestId,
@@ -154,6 +220,22 @@ export function importBackup(file: File): Promise<void> {
           usePortfolioStore.setState({ projects: backup.portfolio.projects });
         }
 
+        if (backup.notes?.notes) {
+          useNotesStore.setState({ notes: backup.notes.notes });
+        }
+
+        if (backup.reviews?.reviews) {
+          useReviewStore.setState({ reviews: backup.reviews.reviews });
+        }
+
+        if (backup.resources?.resources) {
+          useResourcesStore.setState({ resources: backup.resources.resources });
+        }
+
+        if (backup.studyProjects?.projects) {
+          useProjectsStore.setState({ projects: backup.studyProjects.projects });
+        }
+
         if (backup.ui?.theme) {
           useUIStore.getState().setTheme(backup.ui.theme as "modern" | "pixel-quest" | "fantasy-rpg");
         }
@@ -179,4 +261,8 @@ export function resetJourney(): void {
   useStudySessionStore.getState().clearAll();
   useWeeklyGoalStore.getState().clearAll();
   usePortfolioStore.getState().clearAll();
+  useNotesStore.getState().clearAll();
+  useReviewStore.getState().clearAll();
+  useResourcesStore.getState().clearAll();
+  useProjectsStore.getState().clearAll();
 }

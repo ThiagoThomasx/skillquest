@@ -15,6 +15,11 @@ import {
   Star,
   Compass,
   Briefcase,
+  History,
+  Brain,
+  RefreshCw,
+  Library,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -24,15 +29,44 @@ import { useBadgesStore } from "@/stores/badges-store";
 import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { useMemo } from "react";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/explore", label: "Explorar", icon: Compass },
-  { href: "/paths", label: "Trilhas", icon: BookOpen },
-  { href: "/missions", label: "Missões", icon: Target },
-  { href: "/badges", label: "Conquistas", icon: Award },
-  { href: "/portfolio", label: "Portfólio", icon: Briefcase },
-  { href: "/profile", label: "Perfil", icon: User },
-  { href: "/settings", label: "Configurações", icon: Settings },
+type NavGroup = {
+  label: string;
+  items: { href: string; label: string; icon: React.ElementType }[];
+};
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Principal",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/explore", label: "Explorar", icon: Compass },
+    ],
+  },
+  {
+    label: "Aprendizado",
+    items: [
+      { href: "/paths", label: "Trilhas", icon: BookOpen },
+      { href: "/missions", label: "Missões", icon: Target },
+      { href: "/review", label: "Revisões", icon: RefreshCw },
+    ],
+  },
+  {
+    label: "Conteúdo",
+    items: [
+      { href: "/knowledge", label: "Conhecimento", icon: Brain },
+      { href: "/library", label: "Biblioteca", icon: Library },
+      { href: "/history", label: "Histórico", icon: History },
+    ],
+  },
+  {
+    label: "Progresso",
+    items: [
+      { href: "/badges", label: "Conquistas", icon: Award },
+      { href: "/projects", label: "Projetos", icon: FolderKanban },
+      { href: "/portfolio", label: "Portfólio", icon: Briefcase },
+      { href: "/profile", label: "Perfil", icon: User },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -70,25 +104,34 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-col gap-0.5 px-3 py-3 shrink-0">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                active
-                  ? "bg-blue/10 text-blue border border-blue/10"
-                  : "text-text-muted hover:text-text hover:bg-surface-raised border border-transparent"
-              )}
-            >
-              <Icon size={15} strokeWidth={active ? 2.5 : 2} />
-              {label}
-            </Link>
-          );
-        })}
+      <nav className="flex flex-col px-3 py-2 shrink-0">
+        {navGroups.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? "mt-3" : ""}>
+            <p className="px-3 mb-1 text-[9px] font-bold uppercase tracking-widest text-text-dim">
+              {group.label}
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      active
+                        ? "bg-blue/10 text-blue border border-blue/10"
+                        : "text-text-muted hover:text-text hover:bg-surface-raised border border-transparent"
+                    )}
+                  >
+                    <Icon size={15} strokeWidth={active ? 2.5 : 2} />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Cards de Jornada */}

@@ -15,6 +15,8 @@ import { useDailyQuestStore } from "@/stores/daily-quest-store";
 import { useActivityStore } from "@/stores/activity-store";
 import { useProgressStore } from "@/stores/progress-store";
 import { useQuestlinesStore } from "@/stores/questlines-store";
+import { useNotesStore } from "@/stores/notes-store";
+import { useReviewStore } from "@/stores/review-store";
 import { getNextModule } from "@/utils/questline-engine";
 import type { SessionReflection } from "@/stores/study-session-store";
 
@@ -47,6 +49,8 @@ export function StudySessionModal() {
   const { addEvent } = useActivityStore();
   const { addXP } = useProgressStore();
   const { questlines } = useQuestlinesStore();
+  const { addNote } = useNotesStore();
+  const { createReviews } = useReviewStore();
 
   const mission = missions.find((m) => m.id === activeMissionId) ?? null;
   const activeQuestline = questlines.find((q) => q.status === "active") ?? null;
@@ -62,6 +66,11 @@ export function StudySessionModal() {
   const [reflection, setReflection] = useState<SessionReflection>(EMPTY_REFLECTION);
   const [sessionXPEarned, setSessionXPEarned] = useState(0);
   const [missionCompleted, setMissionCompleted] = useState(false);
+  const [quickNoteOpen, setQuickNoteOpen] = useState(false);
+  const [quickNoteTitle, setQuickNoteTitle] = useState("");
+  const [quickNoteContent, setQuickNoteContent] = useState("");
+  const [quickNoteSaved, setQuickNoteSaved] = useState(false);
+  const [savedSession, setSavedSession] = useState<import("@/stores/study-session-store").StudySession | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Live timer
@@ -75,7 +84,8 @@ export function StudySessionModal() {
 
   // Reset local state when modal opens for a new mission
   useEffect(() => {
-    if (isSessionOpen) {
+    if (!isSessionOpen) return;
+    const id = setTimeout(() => {
       setCompletedObjectives(new Set());
       setShowAbandoning(false);
       setShowReflection(false);
@@ -83,7 +93,13 @@ export function StudySessionModal() {
       setReflection(EMPTY_REFLECTION);
       setSessionXPEarned(0);
       setMissionCompleted(false);
-    }
+      setQuickNoteOpen(false);
+      setQuickNoteTitle("");
+      setQuickNoteContent("");
+      setQuickNoteSaved(false);
+      setSavedSession(null);
+    }, 0);
+    return () => clearTimeout(id);
   }, [isSessionOpen, activeMissionId]);
 
   if (!isSessionOpen || !mission) return null;
@@ -102,7 +118,16 @@ export function StudySessionModal() {
     addFocusMinutes(minutesStudied);
 
     const wasCompleted = allObjectivesDone;
-    completeSession(wasCompleted, reflection);
+    const session = completeSession(wasCompleted, reflection);
+
+    // Schedule spaced repetition reviews
+    const activeQl = questlines.find((q) => q.status === "active");
+    createReviews(
+      mission!.id,
+      mission!.title,
+      activeQl?.title ?? mission!.pathTitle ?? "",
+      session.id,
+    );
 
     let xpEarned = 0;
     if (wasCompleted) {
@@ -131,6 +156,9 @@ export function StudySessionModal() {
     setMissionCompleted(wasCompleted);
     setShowReflection(false);
     setSessionDone(true);
+    setSavedSession(session);
+    setQuickNoteTitle(mission!.title);
+    setQuickNoteContent(reflection.whatILearned ?? "");
   }
 
   function handleAbandon() {
@@ -166,14 +194,80 @@ export function StudySessionModal() {
             <p className="text-sm font-bold text-amber mb-1">+{sessionXPEarned} XP ganhos</p>
           )}
           {missionCompleted ? (
-            <p className="text-sm text-emerald font-semibold mb-6">
+            <p className="text-sm text-emerald font-semibold mb-4">
               Missão concluída! 🎯
             </p>
           ) : (
-            <p className="text-xs text-text-muted mb-6">
+            <p className="text-xs text-text-muted mb-4">
               Progresso salvo. Continue depois para concluir a missão.
             </p>
           )}
+
+          {/* Quick note */}
+          {!quickNoteSaved && (
+            <div className="w-full mb-4">
+              {!quickNoteOpen ? (
+                <button
+                  onClick={() => setQuickNoteOpen(true)}
+                  className="w-full text-xs text-blue border border-blue/30 bg-blue/5 hover:bg-blue/10 rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Brain size={13} />
+                  Salvar nota de aprendizado
+                </button>
+              ) : (
+                <div className="text-left border border-border rounded-xl p-3 flex flex-col gap-2 bg-surface-raised">
+                  <input
+                    value={quickNoteTitle}
+                    onChange={(e) => setQuickNoteTitle(e.target.value)}
+                    placeholder="Título da nota"
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-blue/50"
+                  />
+                  <textarea
+                    value={quickNoteContent}
+                    onChange={(e) => setQuickNoteContent(e.target.value)}
+                    placeholder="O que você aprendeu nessa sessão?"
+                    rows={3}
+                    className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-text placeholder:text-text-muted focus:outline-none focus:border-blue/50 resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setQuickNoteOpen(false)}
+                      className="flex-1 text-xs text-text-muted border border-border rounded-lg py-1.5 hover:bg-surface transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!quickNoteTitle.trim() || !quickNoteContent.trim()) return;
+                        const activeQl = questlines.find((q) => q.status === "active");
+                        addNote({
+                          title: quickNoteTitle.trim(),
+                          content: quickNoteContent.trim(),
+                          pathTitle: activeQl?.title ?? "",
+                          moduleTitle: currentModule?.title ?? "",
+                          missionTitle: mission?.title ?? "",
+                          tags: [],
+                          sessionId: savedSession?.id,
+                        });
+                        setQuickNoteSaved(true);
+                        setQuickNoteOpen(false);
+                      }}
+                      className="flex-1 text-xs text-white bg-blue rounded-lg py-1.5 hover:bg-blue/90 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Check size={11} /> Salvar nota
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {quickNoteSaved && (
+            <p className="text-xs text-emerald font-medium mb-4 flex items-center gap-1 justify-center">
+              <Check size={12} /> Nota salva na Base de Conhecimento
+            </p>
+          )}
+
           <Button variant="primary" className="w-full" onClick={closeSession}>
             Fechar
           </Button>

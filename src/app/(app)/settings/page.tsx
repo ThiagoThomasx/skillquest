@@ -7,8 +7,12 @@ import { Badge } from "@/components/ui/Badge";
 import {
   User, Bell, Palette, Shield, Download, Upload,
   AlertTriangle, RefreshCw, Check, X, Pencil,
+  FileJson, Info,
 } from "lucide-react";
-import { exportBackup, importBackup, resetJourney } from "@/stores/backup-store";
+import {
+  exportBackup, importBackup, parseBackupSummary, resetJourney,
+  BACKUP_VERSION, type BackupSummary,
+} from "@/stores/backup-store";
 import { useProgressStore } from "@/stores/progress-store";
 import { useUIStore, type AppTheme } from "@/stores/useUIStore";
 import { ThemeOptionCard } from "@/features/dashboard";
@@ -19,28 +23,52 @@ const THEMES: Array<{ name: string; themeKey: AppTheme; colors: string[]; descri
   { name: "Fantasy RPG", themeKey: "fantasy-rpg", colors: ["#120808", "#2d1212", "#c2410c", "#ca8a04"], description: "Fogo e ouro épico" },
 ];
 
+type ImportState =
+  | { step: "idle" }
+  | { step: "confirming"; file: File; summary: BackupSummary }
+  | { step: "success" }
+  | { step: "error"; message: string };
+
 export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importStatus, setImportStatus] = useState<"idle" | "success" | "error">("idle");
+  const [importState, setImportState] = useState<ImportState>({ step: "idle" });
   const [resetStep, setResetStep] = useState<0 | 1 | 2>(0);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
 
   const { username, setUsername } = useProgressStore();
-  const { theme } = useUIStore();
 
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
+
+    try {
+      const summary = await parseBackupSummary(file);
+      setImportState({ step: "confirming", file, summary });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Arquivo inválido ou corrompido.";
+      setImportState({ step: "error", message });
+      setTimeout(() => setImportState({ step: "idle" }), 5000);
+    }
+  }
+
+  async function confirmImport() {
+    if (importState.step !== "confirming") return;
+    const { file } = importState;
     try {
       await importBackup(file);
-      setImportStatus("success");
-      setTimeout(() => setImportStatus("idle"), 3000);
-    } catch {
-      setImportStatus("error");
-      setTimeout(() => setImportStatus("idle"), 3000);
+      setImportState({ step: "success" });
+      setTimeout(() => setImportState({ step: "idle" }), 4000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao importar backup.";
+      setImportState({ step: "error", message });
+      setTimeout(() => setImportState({ step: "idle" }), 5000);
     }
-    e.target.value = "";
+  }
+
+  function cancelImport() {
+    setImportState({ step: "idle" });
   }
 
   function handleReset() {
@@ -162,42 +190,111 @@ export default function SettingsPage() {
           <div className="flex items-center gap-2">
             <Download size={16} className="text-text-muted" />
             <h3 className="font-semibold text-text">Backup & Restauração</h3>
+            <Badge variant="default">v{BACKUP_VERSION}</Badge>
           </div>
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
-          <p className="text-sm text-text-muted">
-            Exporte toda a sua jornada (XP, missões, conquistas, sequência) como arquivo JSON. Importe para restaurar em qualquer dispositivo.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="secondary" size="sm" onClick={exportBackup} className="gap-2">
-              <Download size={14} />
-              Exportar backup
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-2"
-            >
-              <Upload size={14} />
-              Importar backup
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              className="hidden"
-              onChange={handleImport}
-            />
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-surface-raised border border-border">
+            <Info size={13} className="text-text-dim mt-0.5 shrink-0" />
+            <p className="text-xs text-text-muted leading-relaxed">
+              O backup inclui: trilhas, missões, sessões de estudo, notas, revisões, biblioteca, projetos, portfólio e configurações. Exporte com frequência para não perder seu progresso.
+            </p>
           </div>
 
-          {importStatus === "success" && (
-            <p className="text-xs text-emerald font-medium">✓ Backup importado com sucesso!</p>
+          {/* Idle / action buttons */}
+          {importState.step === "idle" && (
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="secondary" size="sm" onClick={exportBackup} className="gap-2">
+                <Download size={14} />
+                Exportar backup
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="gap-2"
+              >
+                <Upload size={14} />
+                Importar backup
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={handleFileSelected}
+              />
+            </div>
           )}
-          {importStatus === "error" && (
-            <p className="text-xs text-rose font-medium">✗ Arquivo inválido ou corrompido.</p>
+
+          {/* Confirm import */}
+          {importState.step === "confirming" && (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber/5 border border-amber/20">
+                <AlertTriangle size={14} className="text-amber mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-amber">Confirmar importação</p>
+                  <p className="text-xs text-text-muted">
+                    Seus dados atuais serão substituídos pelos dados do backup abaixo. Esta ação não pode ser desfeita.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-surface-raised p-3 space-y-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <FileJson size={13} className="text-text-dim" />
+                  <p className="text-xs font-medium text-text">
+                    Backup v{importState.summary.version} — {new Date(importState.summary.exportedAt).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {[
+                    ["Missões", importState.summary.counts.missions],
+                    ["Trilhas", importState.summary.counts.questlines],
+                    ["Sessões", importState.summary.counts.sessions],
+                    ["Notas", importState.summary.counts.notes],
+                    ["Revisões", importState.summary.counts.reviews],
+                    ["Biblioteca", importState.summary.counts.resources],
+                    ["Projetos", importState.summary.counts.projects],
+                    ["Portfólio", importState.summary.counts.portfolioProjects],
+                  ].map(([label, count]) => (
+                    <div key={label as string} className="flex items-center justify-between">
+                      <span className="text-xs text-text-muted">{label}</span>
+                      <span className="text-xs font-medium text-text">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="primary" size="sm" onClick={confirmImport} className="gap-2">
+                  <Check size={14} />
+                  Confirmar importação
+                </Button>
+                <Button variant="ghost" size="sm" onClick={cancelImport}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Success */}
+          {importState.step === "success" && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald/5 border border-emerald/20">
+              <Check size={14} className="text-emerald shrink-0" />
+              <p className="text-xs text-emerald font-medium">Backup importado com sucesso! Seus dados foram restaurados.</p>
+            </div>
+          )}
+
+          {/* Error */}
+          {importState.step === "error" && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-rose/5 border border-rose/20">
+              <X size={14} className="text-rose shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-medium text-rose">Falha na importação</p>
+                <p className="text-xs text-text-muted mt-0.5">{importState.message}</p>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -213,7 +310,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="pt-0 space-y-4">
           <p className="text-sm text-text-muted">
-            Resetar a jornada apaga todo o progresso local: XP, missões, conquistas, sequência e histórico.
+            Resetar a jornada apaga todo o progresso local: XP, missões, conquistas, sessões, notas, revisões, biblioteca, projetos e histórico.
           </p>
 
           {resetStep > 0 && (
@@ -222,7 +319,7 @@ export default function SettingsPage() {
               <p className="text-xs text-rose">
                 {resetStep === 1
                   ? "Tem certeza? Clique novamente para confirmar o reset."
-                  : "Última chance! Clique uma vez mais para apagar tudo."}
+                  : "Última chance! Clique uma vez mais para apagar tudo permanentemente."}
               </p>
             </div>
           )}

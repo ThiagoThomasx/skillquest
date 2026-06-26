@@ -5,3 +5,4 @@ export { PixelScene } from "./PixelScene";
 export { CareerClassCard } from "./CareerClassCard";
 export { ThemeOptionCard } from "./ThemeOptionCard";
 export { BadgeCard } from "./BadgeCard";
+export { StudyMetricsPanel } from "./StudyMetricsPanel";
