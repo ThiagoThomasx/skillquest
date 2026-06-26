@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import {
+  NowCard,
   PixelScene,
   CareerClassCard,
   ThemeOptionCard,
@@ -176,6 +177,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5 max-w-[1600px]">
+
+      {/* ── Agora ──────────────────────────────────────────────── */}
+      <NowCard />
 
       {/* ── Hero Principal ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">

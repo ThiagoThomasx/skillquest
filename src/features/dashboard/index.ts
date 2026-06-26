@@ -1,3 +1,4 @@
+export { NowCard } from "./NowCard";
 export { XPLevelCard } from "./XPLevelCard";
 export { StatCard } from "./StatCard";
 export { PixelScene } from "./PixelScene";

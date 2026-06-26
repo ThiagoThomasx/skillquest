@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
+export interface SessionReflection {
+  whatILearned: string;
+  difficulty: "easy" | "medium" | "hard" | "";
+  energyFocus: "low" | "medium" | "high" | "";
+  links: string;
+}
+
 export interface StudySession {
   id: string;
   missionId: string;
@@ -10,6 +17,11 @@ export interface StudySession {
   durationSeconds: number;
   notes: string;
   completed: boolean; // true = mission was completed
+  // Reflection fields (added in Sprint 2)
+  whatILearned: string;
+  difficulty: "easy" | "medium" | "hard" | "";
+  energyFocus: "low" | "medium" | "high" | "";
+  links: string;
 }
 
 interface StudySessionState {
@@ -32,7 +44,7 @@ interface StudySessionState {
   pauseTimer: () => void;
   resetTimer: () => void;
   setSessionNotes: (notes: string) => void;
-  completeSession: (missionCompleted: boolean) => StudySession;
+  completeSession: (missionCompleted: boolean, reflection?: Partial<SessionReflection>) => StudySession;
   abandonSession: () => void;
   getElapsedSeconds: () => number;
   clearAll: () => void;
@@ -98,7 +110,7 @@ export const useStudySessionStore = create<StudySessionState>()(
 
         setSessionNotes: (notes) => set({ sessionNotes: notes }),
 
-        completeSession: (missionCompleted) => {
+        completeSession: (missionCompleted, reflection) => {
           const { activeMissionId, activeMissionTitle, accumulatedSeconds, sessionStartedAt, sessionNotes } = get();
           let totalSeconds = accumulatedSeconds;
           if (sessionStartedAt) {
@@ -113,6 +125,10 @@ export const useStudySessionStore = create<StudySessionState>()(
             durationSeconds: Math.round(totalSeconds),
             notes: sessionNotes,
             completed: missionCompleted,
+            whatILearned: reflection?.whatILearned ?? "",
+            difficulty: reflection?.difficulty ?? "",
+            energyFocus: reflection?.energyFocus ?? "",
+            links: reflection?.links ?? "",
           };
           set((s) => ({
             sessions: [session, ...s.sessions].slice(0, 200),
