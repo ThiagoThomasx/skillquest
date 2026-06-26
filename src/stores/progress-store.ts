@@ -18,10 +18,10 @@ interface ProgressState {
 
   // Level-up modal state
   pendingLevelUp: boolean;
-  levelUpData: { newLevel: number; xpGained: number } | null;
+  levelUpData: { newLevel: number; xpGained: number; source: "mission" | "badge" | "other" } | null;
 
   // Actions
-  addXP: (amount: number) => boolean; // returns true if leveled up
+  addXP: (amount: number, source?: "mission" | "badge" | "other") => boolean; // returns true if leveled up
   setUsername: (name: string) => void;
   dismissLevelUp: () => void;
   clearAll: () => void;
@@ -51,7 +51,7 @@ export const useProgressStore = create<ProgressState>()(
         pendingLevelUp: false,
         levelUpData: null,
 
-        addXP: (amount) => {
+        addXP: (amount, source = "other") => {
           const { totalXP, currentLevel } = get();
           const newTotalXP = totalXP + amount;
           const derived = deriveFromXP(newTotalXP);
@@ -63,7 +63,7 @@ export const useProgressStore = create<ProgressState>()(
             ...(leveledUp
               ? {
                   pendingLevelUp: true,
-                  levelUpData: { newLevel: derived.currentLevel, xpGained: amount },
+                  levelUpData: { newLevel: derived.currentLevel, xpGained: amount, source },
                 }
               : {}),
           });

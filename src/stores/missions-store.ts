@@ -57,7 +57,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Criar primeiro componente", "Entender JSX", "Usar props"],
     rewards: ["100 XP"],
     isMainQuest: true,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -74,7 +74,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     progress: 0,
     objectives: ["Criar sistema de cores", "Implementar dark mode"],
     rewards: ["100 XP"],
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -91,7 +91,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     progress: 0,
     objectives: ["Criar feature branches", "Fazer merge com rebase", "Resolver conflitos"],
     rewards: ["125 XP"],
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -109,7 +109,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Implementar useState para estado local", "Usar useEffect com cleanup", "Otimizar com useCallback"],
     rewards: ["200 XP", "Badge: Hook Master"],
     isMainQuest: true,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -127,7 +127,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Configurar layouts aninhados", "Implementar loading states", "Usar route handlers"],
     rewards: ["175 XP"],
     isMainQuest: false,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -145,7 +145,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Criar layout 3 colunas", "Adicionar responsividade", "Grid template areas"],
     rewards: ["150 XP (2×)", "Streak +1"],
     isDaily: true,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -163,7 +163,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Criar generic functions", "Usar utility types (Pick, Omit)", "Conditional types"],
     rewards: ["150 XP", "Badge: TypeScript Expert"],
     isMainQuest: false,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -181,7 +181,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Implementar Context API", "Migrar para Zustand", "Benchmarcar performance"],
     rewards: ["250 XP", "Badge: State Wizard"],
     isMainQuest: false,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -199,7 +199,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Criar endpoints CRUD", "Validar com Zod", "Autenticar com JWT"],
     rewards: ["225 XP"],
     isMainQuest: false,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
   {
@@ -217,7 +217,7 @@ const INITIAL_MISSIONS: StoredMission[] = [
     objectives: ["Construir app completo", "Integrar API REST", "Deploy em produção"],
     rewards: ["500 XP", "Badge: API Slayer", "Título: Mago Frontend"],
     isBoss: true,
-    createdAt: new Date().toISOString(),
+    createdAt: "2026-01-01T00:00:00.000Z",
     completedAt: null,
   },
 ];
@@ -274,7 +274,7 @@ export const useMissionsStore = create<MissionsState>()(
 
         completeMission: (id) => {
           const mission = get().missions.find((m) => m.id === id);
-          if (!mission || mission.status === "completed") return;
+          if (!mission || mission.status === "completed" || mission.status === "locked") return;
 
           // Mark completed
           set((state) => ({
@@ -293,7 +293,7 @@ export const useMissionsStore = create<MissionsState>()(
           const xpEarned = mission.isDaily ? baseXP * 2 : baseXP;
 
           // Add XP (detects level up internally)
-          const leveledUp = useProgressStore.getState().addXP(xpEarned);
+          const leveledUp = useProgressStore.getState().addXP(xpEarned, "mission");
 
           // Log activity
           useActivityStore.getState().addEvent({

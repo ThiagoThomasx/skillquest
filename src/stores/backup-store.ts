@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useProgressStore } from "./progress-store";
 import { useMissionsStore } from "./missions-store";
 import { useBadgesStore } from "./badges-store";
@@ -53,15 +54,49 @@ export function exportBackup(): void {
   URL.revokeObjectURL(url);
 }
 
+const BackupHeaderSchema = z.object({
+  version: z.string(),
+  exportedAt: z.string(),
+  progress: z.object({
+    totalXP: z.number(),
+    currentLevel: z.number(),
+    xpInCurrentLevel: z.number(),
+    xpRequiredForCurrentLevel: z.number(),
+    levelProgress: z.number(),
+    username: z.string(),
+    joinedAt: z.string(),
+  }),
+  missions: z.object({
+    missions: z.array(z.record(z.string(), z.unknown())),
+  }),
+  badges: z.object({
+    earned: z.array(z.object({
+      id: z.string(),
+      earned: z.boolean(),
+      earnedAt: z.string().nullable(),
+    })),
+  }),
+  streak: z.object({
+    currentStreak: z.number(),
+    bestStreak: z.number(),
+    lastActivityDate: z.string().nullable(),
+  }),
+  activity: z.object({
+    events: z.array(z.record(z.string(), z.unknown())),
+  }),
+});
+
 export function importBackup(file: File): Promise<void> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const backup: SkillQuestBackup = JSON.parse(e.target?.result as string);
-        if (!backup.version || !backup.exportedAt) {
-          throw new Error("Arquivo de backup inválido.");
+        const raw = JSON.parse(e.target?.result as string);
+        const result = BackupHeaderSchema.safeParse(raw);
+        if (!result.success) {
+          throw new Error("Arquivo de backup inválido ou de versão incompatível.");
         }
+        const backup = raw as SkillQuestBackup;
 
         const p = backup.progress;
         useProgressStore.setState({

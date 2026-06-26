@@ -52,16 +52,17 @@ export const useDailyQuestStore = create<DailyQuestState>()(
         refreshIfNeeded: (missions, questlines) => {
           const { generatedAt, dailyQuestId, generateDailyQuest } = get();
           const today = TODAY();
-          // Reset focus minutes on new day
+          // New day — reset daily tracking and pick a new quest
           if (generatedAt !== today) {
             set({ focusMinutes: 0, dailyNotes: "" });
             return generateDailyQuest(missions, questlines);
           }
-          // Return existing quest info
+          // Quest exists and is still valid (not deleted, not completed)
           if (dailyQuestId) {
             const mission = missions.find((m) => m.id === dailyQuestId);
-            if (mission && mission.status !== "completed") return null; // already loaded
+            if (mission && mission.status !== "completed") return null;
           }
+          // Quest was deleted, completed, or never set — pick a new one
           return generateDailyQuest(missions, questlines);
         },
 

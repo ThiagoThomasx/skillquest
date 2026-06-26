@@ -33,6 +33,7 @@ import { generateReadmeDraft, generateLinkedInDraft } from "@/utils/portfolio-ge
 import { BADGE_DEFINITIONS } from "@/engines/badge-engine";
 import { getCareerStage } from "@/engines/career-engine";
 import { formatXP, formatRelativeTime } from "@/utils/format";
+import { DIFFICULTY_LABEL } from "@/constants";
 import {
   calculateQuestlineProgress,
   calculateQuestlineEarnedXP,
@@ -51,8 +52,6 @@ const themes = [
   { name: "Pixel Quest", themeKey: "pixel-quest" as const, colors: ["#0d0d1a", "#1a0d2e", "#7c3aed", "#22C55E"], description: "Cyberpunk roxo-neón" },
   { name: "Fantasy RPG", themeKey: "fantasy-rpg" as const, colors: ["#120808", "#2d1212", "#c2410c", "#ca8a04"], description: "Fogo e ouro épico" },
 ];
-
-const DIFFICULTY_LABEL: Record<string, string> = { easy: "Fácil", medium: "Médio", hard: "Difícil", legendary: "Lendário" };
 
 const PRIORITY_REASON_ICON: Record<number, React.ElementType> = {
   1: Timer, 2: BookOpen, 3: Target, 4: Skull, 5: Clock, 6: Zap,
@@ -134,10 +133,13 @@ export default function DashboardPage() {
     [sessions, weekStart]
   );
 
-  // Next badge to unlock
+  // Next badge to unlock — prefer common/rare over epic/legendary to show attainable goal
   const nextBadge = useMemo(() => {
     const alreadyEarned = earned.filter((b) => b.earned).map((b) => b.id);
-    return BADGE_DEFINITIONS.find((b) => !alreadyEarned.includes(b.id)) ?? null;
+    const unearnedDefs = BADGE_DEFINITIONS.filter((b) => !alreadyEarned.includes(b.id));
+    if (unearnedDefs.length === 0) return null;
+    const rarityOrder = { common: 0, rare: 1, epic: 2, legendary: 3 };
+    return unearnedDefs.sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity])[0];
   }, [earned]);
 
   const recentBadges = useMemo(() => {
@@ -146,16 +148,19 @@ export default function DashboardPage() {
       .slice(0, 6);
   }, [earned]);
 
-  // Daily Quest — generate/refresh on mount
+  // Daily Quest — refresh whenever missions or questlines change (e.g. after daily reset)
   useEffect(() => {
     refreshIfNeeded(missions, questlines);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [missions, questlines, refreshIfNeeded]);
 
   const dailyMission = missions.find((m) => m.id === dailyQuestId) ?? null;
 
-  // Days remaining in week
-  const daysRemainingInWeek = 7 - new Date().getDay();
+  // Days remaining in week (Mon–Sun, BR standard). getDay(): 0=Sun,1=Mon,...,6=Sat
+  const daysRemainingInWeek = useMemo(() => {
+    const day = new Date().getDay(); // 0 (Sun) – 6 (Sat)
+    const dayOfWeekMon = day === 0 ? 7 : day; // convert to 1 (Mon) – 7 (Sun)
+    return 7 - dayOfWeekMon + 1; // days left including today
+  }, []);
 
   function handleStartSession() {
     if (!dailyMission) return;

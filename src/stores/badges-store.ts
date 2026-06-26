@@ -17,17 +17,15 @@ interface BadgesState {
   clearAll: () => void;
 }
 
-const initialEarned: StoredBadge[] = BADGE_DEFINITIONS.map((b) => ({
-  id: b.id,
-  earned: false,
-  earnedAt: null,
-}));
+function buildInitialEarned(): StoredBadge[] {
+  return BADGE_DEFINITIONS.map((b) => ({ id: b.id, earned: false, earnedAt: null }));
+}
 
 export const useBadgesStore = create<BadgesState>()(
   devtools(
     persist(
       (set, get) => ({
-        earned: initialEarned,
+        earned: buildInitialEarned(),
 
         evaluate: (ctx) => {
           const { earned } = get();
@@ -47,7 +45,7 @@ export const useBadgesStore = create<BadgesState>()(
           newlyUnlocked.forEach((badgeId) => {
             const def = BADGE_DEFINITIONS.find((b) => b.id === badgeId);
             if (!def) return;
-            useProgressStore.getState().addXP(def.xpReward);
+            useProgressStore.getState().addXP(def.xpReward, "badge");
             useActivityStore.getState().addEvent({
               type: "badge_earned",
               title: `Badge desbloqueada: ${def.title}`,
@@ -59,7 +57,7 @@ export const useBadgesStore = create<BadgesState>()(
           return newlyUnlocked;
         },
 
-        clearAll: () => set({ earned: initialEarned }),
+        clearAll: () => set({ earned: buildInitialEarned() }),
       }),
       { name: "sq-badges" }
     ),

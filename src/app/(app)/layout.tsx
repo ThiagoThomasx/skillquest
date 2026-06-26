@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { LevelUpModal } from "@/components/LevelUpModal";
 import { StoreSync } from "@/components/StoreSync";
 import { StudySessionModal } from "@/components/StudySessionModal";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Topbar />
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-5 pb-20 lg:pb-5">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
 
